@@ -1978,7 +1978,7 @@ table#user-info th, table#user-social-links th {
     margin-left: -50vw;
 
     background-color: var(--dark);
-    background-image: url('https://cdn.crabber.net/img/welcome_tile.png');
+    background-image: url('../img/welcome_tile.png');
     background-size: 40rem;
     background-repeat: repeat;
 
