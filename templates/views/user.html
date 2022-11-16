@@ -1,0 +1,49 @@
+{{template "header.html" .}}
+
+<div class="container">
+    <div class="row profilehead">
+
+        <div class="icon col-sm-2 col-md-2 col-lg-2">
+            <h1><i class="fa fa-user-o fa-3x" aria-hidden="true"></i></h1>
+        </div>
+
+        <div class="col-md-10">
+            <h1><b>{{ .user.FullName}}</b> ({{ .user.Username }})</h1>
+            {{ if not .IsSelf }}
+            <button id="follow" data-id="{{ .user.ID }}" {{ if .CurrentUser.Follows .user.ID }} style="display:none" {{ end }} type="button" class="btn btn-primary" aria-label="Left Align">
+                Follow
+            </button>
+            <button id="unfollow" data-id="{{ .user.ID }}" type="button" class="btn btn-default" aria-label="Left Align">
+                Unfollow
+            </button>
+            {{ else }}
+            <span>That's me!</span>
+            {{ end }}
+            <ul class="profilemeta">
+                <li><b>{{ .user.PhotoCount }}</b> posts</li>
+                <li><b>{{ .user.Followers }}</b> followers</li>
+                <li><b>{{ .user.Following }}</b> following</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="row">
+
+        {{ if not .photos }}
+            <h2>{{ .user.Username }} hasn't uploaded any photos yet</h2>
+        {{ end }}
+        
+        {{ range .photos }}
+        <div class="col-lg-3 col-md-4 col-xs-6 thumb">
+            <a class="thumbnail" href="/photos/{{ .ID }}">
+                <img class="img-responsive" 
+                     src="https://s3.amazonaws.com/pluralsight-photos/{{ .UserID }}/thumb/{{ .Filename }}" 
+                     alt="{{ .Caption }}">
+            </a>
+        </div>
+        {{ end }}
+
+    </div>
+</div>
+
+{{template "footer.html" .}}

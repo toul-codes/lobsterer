@@ -1,0 +1,43 @@
+.navbar {
+    min-height: 76px;
+    border: 0;
+    font-size: 24px;
+  }
+  
+.navbar-header {
+  float: left;
+  padding-left: 15px;
+}
+
+.navbar-brand {
+  height: 76px;
+  padding: 0 15px;
+  font-size: inherit;
+  line-height: 76px;
+}
+
+.navbar-nav {
+  float: left;
+  margin: 0;
+}
+
+.navbar-nav > li {
+  float: left;
+}
+
+.navbar-nav > li > a {
+  padding: 0 15px;
+  line-height: 76px;
+}
+
+.navbar-text {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+#upload_link{
+  text-decoration:none;
+}
+#upload{
+    display:none
+}

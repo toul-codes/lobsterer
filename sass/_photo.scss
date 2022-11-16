@@ -1,0 +1,23 @@
+img.card-img-top {
+    margin-bottom: 0.8em;
+}
+
+.img-action {
+    margin-right: 0.5em;
+}
+
+.redClass {
+    color: #F00;
+}
+
+input.comment {
+    border: 0;   
+    box-shadow: none;
+    -webkit-box-shadow: none;
+}
+
+input.comment:focus {
+    -webkit-box-shadow: none;
+    box-shadow: none;
+    outline: none;
+}

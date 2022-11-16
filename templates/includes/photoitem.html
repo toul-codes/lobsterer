@@ -1,0 +1,28 @@
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <div class="pull-right">{{ .photo.CreatedAt.Format "Jan 02, 2006" }}</div>
+        <div>
+            <h2 class="panel-title"><i class="fa fa-picture-o" aria-hidden="true"></i> <a href="/user/{{ .user.Username}}">{{ .user.Username }}</a></h2>
+        </div>
+    </div>
+    <div id="photoBody" class="panel-body">
+        <img class="card-img-top img-responsive" 
+             src="https://s3.amazonaws.com/pluralsight-photos/{{ .photo.UserID }}/thumb/{{ .photo.Filename }}" 
+             alt="{{ .photo.Caption }}">
+        <p>
+            <span class="img-action heart" data-id="{{ .photo.ID }}"><i class="fa fa-heart fa-2x" aria-hidden="true"></i></span>
+            <span class="img-action comment" data-id="{{ .photo.ID }}"><i class="fa fa-comment fa-2x" aria-hidden="true"></i></span>
+            {{ if eq .photo.UserID .user.ID}}
+            <span class="img-action trash pull-right" data-id="{{ .photo.ID }}"><i class="fa fa-trash fa-2x" aria-hidden="true"></i></span> 
+            {{ end }}
+        </p>
+        <h5 id="likeCount">{{ .photo.Likes }} likes</h5>
+        <p><b>{{ .user.Username }}</b>&nbsp;<span class="text-muted">{{ .photo.Caption }}</span></p>
+        {{ range .comments}}
+        <p><b>{{ .Username }}</b>&nbsp;<span class="text-muted">{{ .Text }}</span></p>
+        {{ end }}
+    </div>
+    <ul id="commentlist" class="list-group">
+        <li class="list-group-item"><input id="comment-{{ .photo.ID }}" data-id="{{ .photo.ID }}" class="comment" type="text" placeholder="Add a comment..." /></li>        
+    </ul>
+</div>
