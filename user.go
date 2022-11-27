@@ -1,8 +1,6 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
 	"net/http"
 
@@ -11,11 +9,9 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 )
 
 type user struct {
@@ -35,89 +31,11 @@ const (
 	accessToken = "accessToken"
 )
 
-var topicArn string
-
-func init() {
-
-	log.Info("Initializing SNS")
-
-	log.Info("Loading configuration")
-	viper.SetConfigName("config") // config.toml
-	viper.AddConfigPath(".")      // use working directory
-
-	if err := viper.ReadInConfig(); err != nil {
-		log.Errorf("error reading config file, %v", err)
-		return
-	}
-
-	topicArn = viper.GetString("sns.topicArn")
-
-	log.Info("SNS topic: ", topicArn)
-}
-
-func loginForm(c *gin.Context) {
-	session := sessions.Default(c)
-	flashes := session.Flashes()
-	session.Save()
-	c.HTML(http.StatusOK, "login.html", gin.H{
-		"title": "Login", "flash": flashes,
-	})
-}
-
-func login(c *gin.Context) {
-	username := c.PostForm("username")
-	password := c.PostForm("password")
-	u := &user{}
-	sessionStore := sessions.Default(c)
-
-	// Get user by username
-
-	if _, err := findUserByUsername(username); err != nil {
-		sessionStore.AddFlash("User not found")
-		sessionStore.Save()
-		c.HTML(http.StatusOK, "login.html", gin.H{
-			"flash": sessionStore.Flashes(),
-			"user":  u,
-		})
-	} else {
-		log.Info("Authenticating via Cognito: ", username)
-		cog := NewCognito()
-		jwt, err := cog.SignIn(username, password)
-
-		if err != nil {
-			msg := err.(awserr.Error).Message()
-			log.Error("Signin Error: ", msg)
-			sessionStore.AddFlash(msg)
-			sessionStore.Save()
-			c.HTML(http.StatusOK, "login.html", gin.H{
-				"flash": sessionStore.Flashes(),
-				"user":  u,
-			})
-		} else {
-			log.Info("Authentication successful")
-			sub, _ := cog.ValidateToken(jwt)
-			sessionStore.Set(accessToken, jwt)
-			sessionStore.Set(userKey, sub)
-			sessionStore.Save()
-			t := sessionStore.Get(accessToken)
-			log.Debug("Testing user in session:", t)
-			c.Redirect(http.StatusFound, "/photos")
-		}
-	}
-}
-
 func signupForm(c *gin.Context) {
 	session := sessions.Default(c)
 	flashes := session.Flashes()
 	session.Save()
 	c.HTML(http.StatusOK, "signup.html", gin.H{"flash": flashes})
-}
-
-func welcome(c *gin.Context) {
-	session := sessions.Default(c)
-	flashes := session.Flashes()
-	session.Save()
-	c.HTML(http.StatusOK, "welcome.html", gin.H{"flash": flashes})
 }
 
 func signup(c *gin.Context) {
@@ -128,7 +46,8 @@ func signup(c *gin.Context) {
 	}
 
 	sessionStore := sessions.Default(c)
-
+	// ask the ddb if the user exists but can instead
+	// use it on create user
 	u, _ := findUserByUsername(user.Username)
 
 	if u != nil {
@@ -171,7 +90,6 @@ func signup(c *gin.Context) {
 	user.ID = sub // Set user ID to Cognito UUID
 
 	// Create user in DynamoDB
-
 	av, err := dynamodbattribute.MarshalMap(user)
 
 	if err != nil {
@@ -187,6 +105,7 @@ func signup(c *gin.Context) {
 		return
 	}
 
+	// TODO create the user in the local test dynamo db for testing
 	sess, _ := session.NewSession(&aws.Config{
 		Region: aws.String("us-west-2"),
 	})
@@ -212,29 +131,64 @@ func signup(c *gin.Context) {
 		c.Redirect(http.StatusFound, "/photos")
 	}
 
-	// Send SNS notifcation
-
-	log.Info("Sending SNS message")
-
-	snssvc := sns.New(sess)
-
-	var buffer bytes.Buffer
-	userdata, _ := json.Marshal(user)
-	buffer.Write(userdata)
-
-	params := &sns.PublishInput{
-		Subject:  aws.String("New Subscriber"),
-		Message:  aws.String("User:\n" + buffer.String()),
-		TopicArn: aws.String(topicArn),
-	}
-
-	_, err = snssvc.Publish(params)
-
-	if err != nil {
-		log.Errorf("Error: %v", err.Error())
-	}
-
 	sessionStore.Save()
+}
+
+func welcome(c *gin.Context) {
+	session := sessions.Default(c)
+	flashes := session.Flashes()
+	session.Save()
+	c.HTML(http.StatusOK, "welcome.html", gin.H{"flash": flashes})
+}
+
+func loginForm(c *gin.Context) {
+	session := sessions.Default(c)
+	flashes := session.Flashes()
+	session.Save()
+	c.HTML(http.StatusOK, "login.html", gin.H{
+		"title": "Login", "flash": flashes,
+	})
+}
+
+func login(c *gin.Context) {
+	username := c.PostForm("username")
+	password := c.PostForm("password")
+	u := &user{}
+	sessionStore := sessions.Default(c)
+
+	// Get user by username
+	if _, err := findUserByUsername(username); err != nil {
+		sessionStore.AddFlash("User not found")
+		sessionStore.Save()
+		c.HTML(http.StatusOK, "login.html", gin.H{
+			"flash": sessionStore.Flashes(),
+			"user":  u,
+		})
+	} else {
+		log.Info("Authenticating via Cognito: ", username)
+		cog := NewCognito()
+		jwt, err := cog.SignIn(username, password)
+
+		if err != nil {
+			msg := err.(awserr.Error).Message()
+			log.Error("Signin Error: ", msg)
+			sessionStore.AddFlash(msg)
+			sessionStore.Save()
+			c.HTML(http.StatusOK, "login.html", gin.H{
+				"flash": sessionStore.Flashes(),
+				"user":  u,
+			})
+		} else {
+			log.Info("Authentication successful")
+			sub, _ := cog.ValidateToken(jwt)
+			sessionStore.Set(accessToken, jwt)
+			sessionStore.Set(userKey, sub)
+			sessionStore.Save()
+			t := sessionStore.Get(accessToken)
+			log.Debug("Testing user in session:", t)
+			c.Redirect(http.StatusFound, "/timeline")
+		}
+	}
 }
 
 func logout(c *gin.Context) {
@@ -248,63 +202,58 @@ func logout(c *gin.Context) {
 // Profile shows the user profile
 // GET /user/:username
 func Profile(c *gin.Context) {
-	username := c.Params.ByName("username")
+	//username := c.Params.ByName("username")
+	//
+	//user, err := findUserByUsername(username)
+	//
+	//if err != nil {
+	//	log.Error("Error:", err)
+	//	c.HTML(http.StatusOK, "404.html", nil)
+	//	return
+	//}
+	//
+	//// Find photos by user
+	//queryInput := &dynamodb.QueryInput{
+	//	TableName: aws.String("PhotosAppPhotos"),
+	//	KeyConditions: map[string]*dynamodb.Condition{
+	//		"UserID": {
+	//			ComparisonOperator: aws.String("EQ"),
+	//			AttributeValueList: []*dynamodb.AttributeValue{
+	//				{
+	//					S: aws.String(user.ID),
+	//				},
+	//			},
+	//		},
+	//	},
+	//	IndexName: aws.String("UserID-index"),
+	//}
+	//
+	//sess, _ := session.NewSession(&aws.Config{
+	//	Region: aws.String("us-west-2"),
+	//})
+	//svc := dynamodb.New(sess)
+	//
+	//qo, err := svc.Query(queryInput)
+	//
+	//if err != nil {
+	//	log.Errorf("Error: %v", err)
+	//	c.HTML(http.StatusOK, "404.html", nil)
+	//	return
+	//}
+	//
+	//photos := []photo{}
+	//err = dynamodbattribute.UnmarshalListOfMaps(qo.Items, &photos)
+	//if err != nil {
+	//	log.Errorf("failed to unmarshal Query result items, %v", err)
+	//	c.HTML(http.StatusOK, "404.html", nil)
+	//	return
+	//}
+	//
+	//sessionStore := sessions.Default(c)
+	//uid := sessionStore.Get(userKey)
+	//currentUser, _ := findUserByID(uid.(string))
 
-	user, err := findUserByUsername(username)
-
-	if err != nil {
-		log.Error("Error:", err)
-		c.HTML(http.StatusOK, "404.html", nil)
-		return
-	}
-
-	// Find photos by user
-	queryInput := &dynamodb.QueryInput{
-		TableName: aws.String("PhotosAppPhotos"),
-		KeyConditions: map[string]*dynamodb.Condition{
-			"UserID": {
-				ComparisonOperator: aws.String("EQ"),
-				AttributeValueList: []*dynamodb.AttributeValue{
-					{
-						S: aws.String(user.ID),
-					},
-				},
-			},
-		},
-		IndexName: aws.String("UserID-index"),
-	}
-
-	sess, _ := session.NewSession(&aws.Config{
-		Region: aws.String("us-west-2"),
-	})
-	svc := dynamodb.New(sess)
-
-	qo, err := svc.Query(queryInput)
-
-	if err != nil {
-		log.Errorf("Error: %v", err)
-		c.HTML(http.StatusOK, "404.html", nil)
-		return
-	}
-
-	photos := []photo{}
-	err = dynamodbattribute.UnmarshalListOfMaps(qo.Items, &photos)
-	if err != nil {
-		log.Errorf("failed to unmarshal Query result items, %v", err)
-		c.HTML(http.StatusOK, "404.html", nil)
-		return
-	}
-
-	sessionStore := sessions.Default(c)
-	uid := sessionStore.Get(userKey)
-	currentUser, _ := findUserByID(uid.(string))
-
-	c.HTML(http.StatusOK, "user.html", gin.H{
-		"user":        user,
-		"photos":      photos,
-		"IsSelf":      uid == user.ID,
-		"CurrentUser": currentUser,
-	})
+	c.HTML(http.StatusOK, "timeline.html", gin.H{})
 }
 
 func findUserByUsername(username string) (*user, error) {
