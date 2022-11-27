@@ -1,0 +1,239 @@
+package models
+
+import (
+	"context"
+	"errors"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/aws/transport/http"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/aws/smithy-go"
+	"log"
+	"strings"
+)
+
+type ItemService struct {
+	itemTable *dynamodb.Client
+}
+
+type DynamoConfig struct {
+	Region string
+	Url    string
+	AKID   string
+	SAC    string
+	ST     string
+	Source string
+}
+
+func NewItemService(d *DynamoConfig) ItemService {
+	dt := CreateLocalClient(d)
+	return ItemService{
+		itemTable: dt,
+	}
+}
+
+func CreateLocalClient(d *DynamoConfig) *dynamodb.Client {
+	cfg, err := config.LoadDefaultConfig(context.TODO(),
+		config.WithRegion(d.Region),
+		config.WithEndpointResolverWithOptions(aws.EndpointResolverWithOptionsFunc(
+			func(service, region string, options ...interface{}) (aws.Endpoint, error) {
+				return aws.Endpoint{URL: d.Url}, nil
+			})),
+		config.WithCredentialsProvider(credentials.StaticCredentialsProvider{
+			Value: aws.Credentials{
+				AccessKeyID: d.AKID, SecretAccessKey: d.SAC, SessionToken: d.ST,
+				Source: d.Source,
+			},
+		}),
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	return dynamodb.NewFromConfig(cfg)
+}
+
+func CreateTableIfNotExists(d *dynamodb.Client, tableName string) {
+	if tableExists(d, tableName) {
+		log.Printf("table=%v already exists\n", tableName)
+		return
+	}
+	_, err := d.CreateTable(context.TODO(), buildCreateTableInput(tableName))
+	if err != nil {
+		log.Fatal("CreateTable failed", err)
+	}
+	log.Printf("created table=%v\n", tableName)
+}
+
+func tableExists(d *dynamodb.Client, name string) bool {
+	tables, err := d.ListTables(context.TODO(), &dynamodb.ListTablesInput{})
+	if err != nil {
+		log.Fatal("ListTables failed", err)
+	}
+	for _, n := range tables.TableNames {
+		if n == name {
+			return true
+		}
+	}
+	return false
+}
+
+func buildCreateTableInput(tableName string) *dynamodb.CreateTableInput {
+	return &dynamodb.CreateTableInput{
+		AttributeDefinitions: []types.AttributeDefinition{
+			{
+				AttributeName: aws.String("PK"),
+				AttributeType: types.ScalarAttributeTypeS,
+			},
+			{
+				AttributeName: aws.String("SK"),
+				AttributeType: types.ScalarAttributeTypeS,
+			},
+			{
+				AttributeName: aws.String("GSI1PK"),
+				AttributeType: types.ScalarAttributeTypeS,
+			},
+			{
+				AttributeName: aws.String("GSI1SK"),
+				AttributeType: types.ScalarAttributeTypeS,
+			},
+			{
+				AttributeName: aws.String("GSI2PK"),
+				AttributeType: types.ScalarAttributeTypeS,
+			},
+			{
+				AttributeName: aws.String("GSI2SK"),
+				AttributeType: types.ScalarAttributeTypeS,
+			},
+			{
+				AttributeName: aws.String("GSI3PK"),
+				AttributeType: types.ScalarAttributeTypeS,
+			},
+			{
+				AttributeName: aws.String("GSI3SK"),
+				AttributeType: types.ScalarAttributeTypeS,
+			},
+		},
+		KeySchema: []types.KeySchemaElement{
+			{
+				AttributeName: aws.String("PK"),
+				KeyType:       types.KeyTypeHash,
+			},
+			{
+				AttributeName: aws.String("SK"),
+				KeyType:       types.KeyTypeRange,
+			},
+		},
+		GlobalSecondaryIndexes: []types.GlobalSecondaryIndex{
+			{
+				IndexName: aws.String("GSI1"),
+				KeySchema: []types.KeySchemaElement{
+					{
+						AttributeName: aws.String("GSI1PK"),
+						KeyType:       types.KeyTypeHash,
+					},
+					{
+						AttributeName: aws.String("GSI1SK"),
+						KeyType:       types.KeyTypeRange,
+					},
+				},
+				Projection: &types.Projection{
+					ProjectionType: "ALL",
+				},
+			},
+			{
+				IndexName: aws.String("GSI2"),
+				KeySchema: []types.KeySchemaElement{
+					{
+						AttributeName: aws.String("GSI2PK"),
+						KeyType:       types.KeyTypeHash,
+					},
+					{
+						AttributeName: aws.String("GSI2SK"),
+						KeyType:       types.KeyTypeRange,
+					},
+				},
+				Projection: &types.Projection{
+					ProjectionType: "ALL",
+				},
+			}, {
+				IndexName: aws.String("GSI3"),
+				KeySchema: []types.KeySchemaElement{
+					{
+						AttributeName: aws.String("GSI3PK"),
+						KeyType:       types.KeyTypeHash,
+					},
+					{
+						AttributeName: aws.String("GSI3SK"),
+						KeyType:       types.KeyTypeRange,
+					},
+				},
+				Projection: &types.Projection{
+					ProjectionType: "ALL",
+				},
+			},
+		},
+
+		TableName:   aws.String(tableName),
+		BillingMode: types.BillingModePayPerRequest,
+	}
+}
+
+func IsConditionCheckFailure(err error) bool {
+	if strings.Contains(err.Error(), "ConditionalCheckFailedException") {
+		return true
+	}
+	var oe *smithy.OperationError
+	if errors.As(err, &oe) {
+		var re *http.ResponseError
+		if errors.As(err, &re) {
+			var tce *types.TransactionCanceledException
+			if errors.As(err, &tce) {
+				for _, reason := range tce.CancellationReasons {
+					if *reason.Code == "ConditionalCheckFailed" {
+						return true
+					}
+				}
+			}
+		}
+	}
+
+	return false
+}
+
+func DeleteAllItems(d *dynamodb.Client, tableName string) error {
+	log.Printf("deleting all items from table=%v\n", tableName)
+	var offset map[string]types.AttributeValue
+	for {
+		scanInput := &dynamodb.ScanInput{
+			TableName: aws.String(tableName),
+		}
+		if offset != nil {
+			scanInput.ExclusiveStartKey = offset
+		}
+		result, err := d.Scan(context.TODO(), scanInput)
+		if err != nil {
+			return err
+		}
+
+		for _, item := range result.Items {
+			_, err := d.DeleteItem(context.TODO(), &dynamodb.DeleteItemInput{
+				TableName: aws.String(tableName),
+				Key:       map[string]types.AttributeValue{"PK": item["PK"], "SK": item["SK"]},
+			},
+			)
+			if err != nil {
+				return err
+			}
+		}
+
+		if result.LastEvaluatedKey == nil {
+			break
+		}
+		offset = result.LastEvaluatedKey
+	}
+	return nil
+
+}

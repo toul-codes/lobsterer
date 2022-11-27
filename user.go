@@ -259,7 +259,6 @@ func Profile(c *gin.Context) {
 	}
 
 	// Find photos by user
-
 	queryInput := &dynamodb.QueryInput{
 		TableName: aws.String("PhotosAppPhotos"),
 		KeyConditions: map[string]*dynamodb.Condition{
