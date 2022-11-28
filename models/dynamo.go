@@ -3,6 +3,7 @@ package models
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/aws/transport/http"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -12,6 +13,10 @@ import (
 	"github.com/aws/smithy-go"
 	"log"
 	"strings"
+)
+
+const (
+	TableName = "Lobsterer-Test"
 )
 
 type ItemService struct {
@@ -65,6 +70,20 @@ func CreateTableIfNotExists(d *dynamodb.Client, tableName string) {
 		log.Fatal("CreateTable failed", err)
 	}
 	log.Printf("created table=%v\n", tableName)
+}
+
+func Print(d *dynamodb.Client, tableName string) {
+	out, err := d.Scan(context.TODO(), &dynamodb.ScanInput{
+		TableName: aws.String(tableName),
+	})
+	if err != nil {
+		fmt.Printf("Err: %s", err)
+	}
+	for _, item := range out.Items {
+		for k, v := range item {
+			fmt.Printf("\n k:%s, v:%s", k, v)
+		}
+	}
 }
 
 func tableExists(d *dynamodb.Client, name string) bool {

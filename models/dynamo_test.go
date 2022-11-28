@@ -1,13 +1,34 @@
 package models
 
 import (
+	"context"
 	"fmt"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"log"
 	"testing"
 )
 
-const (
-	tableName = "go-dynamodb-reference-table"
-)
+func TestDeleteAllItems(t *testing.T) {
+	is := NewItemService(&DynamoConfig{
+		Region: "us-west-2",
+		Url:    "http://localhost:8000",
+		AKID:   "getGudKid",
+		SAC:    "eatMorCrabs",
+		ST:     "thisissuchasecret",
+		Source: "noneofthismattersitsalllocalyfake",
+	})
+	err := DeleteAllItems(is.itemTable, TableName)
+	if err != nil {
+		log.Fatal("failed to delete all items", err)
+	}
+
+	scan, err := is.itemTable.Scan(context.TODO(), &dynamodb.ScanInput{TableName: aws.String(TableName)})
+	if err != nil {
+		log.Fatal("scan failed", err)
+	}
+	log.Printf("expected scan to have zero items; it had len=%d\n", len(scan.Items))
+}
 
 func TestNewItemService(t *testing.T) {
 	is := NewItemService(&DynamoConfig{
@@ -23,6 +44,32 @@ func TestNewItemService(t *testing.T) {
 	}
 }
 
+func TestGetByName(t *testing.T) {
+	is := NewItemService(&DynamoConfig{
+		Region: "us-west-2",
+		Url:    "http://localhost:8000",
+		AKID:   "getGudKid",
+		SAC:    "eatMorCrabs",
+		ST:     "thisissuchasecret",
+		Source: "noneofthismattersitsalllocalyfake",
+	})
+	res, _ := ByName("Larry", is, TableName)
+	fmt.Printf("res: %+v", res)
+}
+
+func TestPrint(t *testing.T) {
+	is := NewItemService(&DynamoConfig{
+		Region: "us-west-2",
+		Url:    "http://localhost:8000",
+		AKID:   "getGudKid",
+		SAC:    "eatMorCrabs",
+		ST:     "thisissuchasecret",
+		Source: "noneofthismattersitsalllocalyfake",
+	})
+
+	Print(is.itemTable, TableName)
+}
+
 func TestCreateTableIfNotExists(t *testing.T) {
 	is := NewItemService(&DynamoConfig{
 		Region: "us-west-2",
@@ -33,11 +80,27 @@ func TestCreateTableIfNotExists(t *testing.T) {
 		Source: "noneofthismattersitsalllocalyfake",
 	})
 
-	CreateTableIfNotExists(is.itemTable, "Lobsterer-Test")
+	CreateTableIfNotExists(is.itemTable, TableName)
 
 }
 
-func TestAddUser(t *testing.T) {
+func TestExists(t *testing.T) {
+	is := NewItemService(&DynamoConfig{
+		Region: "us-west-2",
+		Url:    "http://localhost:8000",
+		AKID:   "getGudKid",
+		SAC:    "eatMorCrabs",
+		ST:     "thisissuchasecret",
+		Source: "noneofthismattersitsalllocalyfake",
+	})
+	want := true
+	got, _ := Exists("Larry", is, TableName)
+	if got != want {
+		fmt.Println("got", got)
+	}
+}
+
+func TestUserAdd(t *testing.T) {
 	is := NewItemService(&DynamoConfig{
 		Region: "us-west-2",
 		Url:    "http://localhost:8000",
@@ -62,7 +125,8 @@ func TestAddUser(t *testing.T) {
 		Deleted:     false,
 	}
 
-	AddUser(u, is, "Lobsterer-Test")
+	u.Add(is, TableName)
+	// this should trigger an error because the user exists already
 }
 
 //
