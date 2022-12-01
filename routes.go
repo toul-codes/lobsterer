@@ -34,6 +34,7 @@ func registerRoutes() *gin.Engine {
 
 	user := r.Group("/user", AuthRequired())
 	{
+
 		user.GET("/:username", Profile)
 		user.POST("/:id/follow", Follow)
 		user.POST("/:id/unfollow", Unfollow)

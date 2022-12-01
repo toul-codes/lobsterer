@@ -231,7 +231,55 @@ func Profile(c *gin.Context) {
 	uid := sessionStore.Get(userKey)
 	//currentUser, _ := findUserByID(uid.(string))
 
+	//  have usr  data so can pass it to the user.html
 	c.HTML(http.StatusOK, "user.html", gin.H{
+		"user":        usr,
+		"IsSelf":      uid == usr.ID,
+		"CurrentUser": usr,
+	})
+}
+
+// Timeline shows the user profile
+// GET /user/:username/Timeline
+func Timeline(c *gin.Context) {
+	username := c.Params.ByName("username")
+	is := models.NewItemService(&models.DynamoConfig{
+		Region: "us-west-2",
+		Url:    "http://localhost:8000",
+		AKID:   "getGudKid",
+		SAC:    "eatMorCrabs",
+		ST:     "thisissuchasecret",
+		Source: "noneofthismattersitsalllocalyfake",
+	})
+	usr, err := models.ByName(username, is, models.TableName)
+	if err != nil {
+		log.Error("Error:", err)
+		c.HTML(http.StatusOK, "404.html", nil)
+		return
+	}
+
+	// TODO rewrite this to  Find molts by user
+	//queryInput := &dynamodb.QueryInput{
+	//	TableName: aws.String("PhotosAppPhotos"),
+	//	KeyConditions: map[string]*dynamodb.Condition{
+	//		"UserID": {
+	//			ComparisonOperator: aws.String("EQ"),
+	//			AttributeValueList: []*dynamodb.AttributeValue{
+	//				{
+	//					S: aws.String(usr.ID),
+	//				},
+	//			},
+	//		},
+	//	},
+	//	IndexName: aws.String("UserID-index"),
+	//}
+
+	sessionStore := sessions.Default(c)
+	uid := sessionStore.Get(userKey)
+	//currentUser, _ := findUserByID(uid.(string))
+
+	//  have usr  data so can pass it to the user.html
+	c.HTML(http.StatusOK, "timeline.html", gin.H{
 		"user":        usr,
 		"IsSelf":      uid == usr.ID,
 		"CurrentUser": usr,
@@ -326,7 +374,6 @@ func Follow(c *gin.Context) {
 	}
 
 	// Insert follower into DynamoDB
-
 	av, err := dynamodbattribute.MarshalMap(follower)
 
 	if err != nil {

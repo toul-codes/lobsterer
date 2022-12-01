@@ -44,7 +44,7 @@ func TestNewItemService(t *testing.T) {
 	}
 }
 
-func TestGetByName(t *testing.T) {
+func TestByID(t *testing.T) {
 	is := NewItemService(&DynamoConfig{
 		Region: "us-west-2",
 		Url:    "http://localhost:8000",
@@ -53,7 +53,7 @@ func TestGetByName(t *testing.T) {
 		ST:     "thisissuchasecret",
 		Source: "noneofthismattersitsalllocalyfake",
 	})
-	res, _ := ByName("Larry", is, TableName)
+	res, _ := ByID("3333c33b-c3cc-33bc-3333-33333e3f3f33", is, TableName)
 	fmt.Printf("res: %+v", res)
 }
 
@@ -110,26 +110,81 @@ func TestUserAdd(t *testing.T) {
 		Source: "noneofthismattersitsalllocalyfake",
 	})
 
-	u := &User{
-		PK:          "L#Larry",
-		SK:          "L#Larry",
-		Name:        "Larry",
-		Email:       "larry@bikinibottom.com",
-		Display:     "BigLobster",
-		Description: "I like weights",
-		Verified:    false,
-		Avatar:      "https://www.google.com/imgres?imgurl=https%3A%2F%2Fstatic.wikia.nocookie.net%2Fspongebob%2Fimages%2F0%2F05%2FLarry_the_Lobster_stock_image_standing.png%2Frevision%2Flatest%3Fcb%3D20220807062551&imgrefurl=https%3A%2F%2Fspongebob.fandom.com%2Fwiki%2FLarry_the_Lobster&tbnid=pbx86w_qC1rc5M&vet=12ahUKEwi_8Kaa48P7AhU1s2oFHWRrCPMQMygAegUIARDfAQ..i&docid=vqku3XZJ7pEJrM&w=1500&h=1500&q=larry%20spongebob&client=safari&ved=2ahUKEwi_8Kaa48P7AhU1s2oFHWRrCPMQMygAegUIARDfAQ",
-		Banner:      "https://www.google.com/imgres?imgurl=https%3A%2F%2Fstatic.wikia.nocookie.net%2Fspongebob%2Fimages%2F0%2F05%2FLarry_the_Lobster_stock_image_standing.png%2Frevision%2Flatest%3Fcb%3D20220807062551&imgrefurl=https%3A%2F%2Fspongebob.fandom.com%2Fwiki%2FLarry_the_Lobster&tbnid=pbx86w_qC1rc5M&vet=12ahUKEwi_8Kaa48P7AhU1s2oFHWRrCPMQMygAegUIARDfAQ..i&docid=vqku3XZJ7pEJrM&w=1500&h=1500&q=larry%20spongebob&client=safari&ved=2ahUKEwi_8Kaa48P7AhU1s2oFHWRrCPMQMygAegUIARDfAQ",
-		Banned:      false,
-		Website:     "LarryTheLobstersGym.com",
-		Deleted:     false,
+	//d := &User{
+	//	ID:             "1111b11a-b1bb-11ab-1111-11111d1e1f11",
+	//	Name:           "Toul",
+	//	Email:          "toul@hey.com",
+	//	Display:        "Toul",
+	//	Description:    "I like lobsters",
+	//	Verified:       false,
+	//	Avatar:         "",
+	//	Banner:         "",
+	//	Banned:         false,
+	//	Website:        "https://toul.io",
+	//	Deleted:        false,
+	//	FollowerCount:  0,
+	//	FollowingCount: 0,
+	//}
+	d := &User{
+		ID:             "3333c33b-c3cc-33bc-3333-33333e3f3f33",
+		Name:           "Phillip",
+		Email:          "phillp@gmail.com",
+		Display:        "animeLover",
+		Description:    "I like romcom animes",
+		Verified:       false,
+		Avatar:         "",
+		Banner:         "",
+		Banned:         false,
+		Website:        "",
+		Deleted:        false,
+		FollowerCount:  0,
+		FollowingCount: 0,
 	}
 
-	u.Add(is, TableName)
-	// this should trigger an error because the user exists already
+	d.Add(is, TableName)
+
 }
 
-//
+func TestFollow(t *testing.T) {
+	is := NewItemService(&DynamoConfig{
+		Region: "us-west-2",
+		Url:    "http://localhost:8000",
+		AKID:   "getGudKid",
+		SAC:    "eatMorCrabs",
+		ST:     "thisissuchasecret",
+		Source: "noneofthismattersitsalllocalyfake",
+	})
+	phillip, _ := ByID("3333c33b-c3cc-33bc-3333-33333e3f3f33", is, TableName)
+	larry := "1111b11a-b1bb-11ab-1111-11111d1e1f11"
+	phillip.Follow(is, TableName, larry)
+}
+
+func TestFollowing(t *testing.T) {
+	is := NewItemService(&DynamoConfig{
+		Region: "us-west-2",
+		Url:    "http://localhost:8000",
+		AKID:   "getGudKid",
+		SAC:    "eatMorCrabs",
+		ST:     "thisissuchasecret",
+		Source: "noneofthismattersitsalllocalyfake",
+	})
+	phillip, _ := ByID("3333c33b-c3cc-33bc-3333-33333e3f3f33", is, TableName)
+	phillip.Following(is, TableName)
+}
+
+func TestFollowers(t *testing.T) {
+	is := NewItemService(&DynamoConfig{
+		Region: "us-west-2",
+		Url:    "http://localhost:8000",
+		AKID:   "getGudKid",
+		SAC:    "eatMorCrabs",
+		ST:     "thisissuchasecret",
+		Source: "noneofthismattersitsalllocalyfake",
+	})
+	larry, _ := ByID("1111b11a-b1bb-11ab-1111-11111d1e1f11", is, TableName)
+	larry.Followers(is, TableName)
+}
+
 //func TestItemService_CreateItem(t *testing.T) {
 //	log.Println("starting")
 //	conditionCheckFailure()
