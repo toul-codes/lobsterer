@@ -38,8 +38,10 @@ type User struct {
 }
 
 type Follow struct {
-	PK string `dynamodbav:"PK"`
-	SK string `dynamodbav:"SK"`
+	PK     string `dynamodbav:"PK"`
+	SK     string `dynamodbav:"SK"`
+	GSI1PK string `dynamodbav:"GSI1PK"`
+	GSI1SK string `dynamodbav:"GSI1SK"`
 }
 
 // Add - creates user record in table
@@ -118,13 +120,15 @@ func ByID(ID string, svc ItemService, tablename string) (User, error) {
 	return user, nil
 }
 
-// Follows - creates a user_follows_User record in db
+// Follow - creates a user_follows_User record in db
 func (u *User) Follow(svc ItemService, tablename string, fid string) error {
 	// this is only for developing mode to work with GIN will need a session
 	// which isn't great for running a local test programatically
 	f := &Follow{
-		PK: "F#" + u.ID, // my unique cognito id so can change Display as much as want
-		SK: "F#" + fid,  // others unique user id so they can do the same
+		PK:     "F#" + u.ID, // my unique cognito id so can change Display as much as want
+		SK:     "F#" + fid,  // others unique user id so they can do the same
+		GSI1PK: "F#" + fid,  // my unique cognito id so can change Display as much as want
+		GSI1SK: "F#" + u.ID,
 	}
 
 	item, err := attributevalue.MarshalMap(f)
@@ -196,7 +200,7 @@ func (u *User) Follow(svc ItemService, tablename string, fid string) error {
 	return err
 }
 
-// Following - returns list of users user is following
+// Following - who the user is following
 func (u *User) Following(svc ItemService, tablename string) []User {
 	following := make([]User, 0)
 	p := dynamodb.NewQueryPaginator(svc.itemTable, &dynamodb.QueryInput{
@@ -227,13 +231,14 @@ func (u *User) Following(svc ItemService, tablename string) []User {
 	return following
 }
 
-// Followers - returns of users following user
+// Followers - user's followers
 func (u *User) Followers(svc ItemService, tablename string) []User {
 	followers := make([]User, 0)
 	p := dynamodb.NewQueryPaginator(svc.itemTable, &dynamodb.QueryInput{
 		TableName:              aws.String(tablename),
 		Limit:                  aws.Int32(5),
-		KeyConditionExpression: aws.String("PK = :hashKey"),
+		IndexName:              aws.String("GSI1"),
+		KeyConditionExpression: aws.String("GSI1PK = :hashKey"),
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":hashKey": &types.AttributeValueMemberS{Value: "F#" + u.ID},
 		},

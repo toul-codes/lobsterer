@@ -110,27 +110,12 @@ func TestUserAdd(t *testing.T) {
 		Source: "noneofthismattersitsalllocalyfake",
 	})
 
-	//d := &User{
-	//	ID:             "1111b11a-b1bb-11ab-1111-11111d1e1f11",
-	//	Name:           "Toul",
-	//	Email:          "toul@hey.com",
-	//	Display:        "Toul",
-	//	Description:    "I like lobsters",
-	//	Verified:       false,
-	//	Avatar:         "",
-	//	Banner:         "",
-	//	Banned:         false,
-	//	Website:        "https://toul.io",
-	//	Deleted:        false,
-	//	FollowerCount:  0,
-	//	FollowingCount: 0,
-	//}
 	d := &User{
-		ID:             "3333c33b-c3cc-33bc-3333-33333e3f3f33",
-		Name:           "Phillip",
-		Email:          "phillp@gmail.com",
-		Display:        "animeLover",
-		Description:    "I like romcom animes",
+		ID:             "4444c44b-c4cc-44bc-4444-44444e4f4f44",
+		Name:           "Frodo",
+		Email:          "frodo@gmail.com",
+		Display:        "OneRingLover",
+		Description:    "I like rings",
 		Verified:       false,
 		Avatar:         "",
 		Banner:         "",
@@ -155,8 +140,8 @@ func TestFollow(t *testing.T) {
 		Source: "noneofthismattersitsalllocalyfake",
 	})
 	phillip, _ := ByID("3333c33b-c3cc-33bc-3333-33333e3f3f33", is, TableName)
-	larry := "1111b11a-b1bb-11ab-1111-11111d1e1f11"
-	phillip.Follow(is, TableName, larry)
+	frodo := "4444c44b-c4cc-44bc-4444-44444e4f4f44"
+	phillip.Follow(is, TableName, frodo)
 }
 
 func TestFollowing(t *testing.T) {
@@ -181,8 +166,8 @@ func TestFollowers(t *testing.T) {
 		ST:     "thisissuchasecret",
 		Source: "noneofthismattersitsalllocalyfake",
 	})
-	larry, _ := ByID("1111b11a-b1bb-11ab-1111-11111d1e1f11", is, TableName)
-	larry.Followers(is, TableName)
+	frodo, _ := ByID("4444c44b-c4cc-44bc-4444-44444e4f4f44", is, TableName)
+	frodo.Followers(is, TableName)
 }
 
 //func TestItemService_CreateItem(t *testing.T) {
