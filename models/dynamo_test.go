@@ -100,7 +100,7 @@ func TestExists(t *testing.T) {
 	}
 }
 
-func TestUserAdd(t *testing.T) {
+func TestUser_Add(t *testing.T) {
 	is := NewItemService(&DynamoConfig{
 		Region: "us-west-2",
 		Url:    "http://localhost:8000",
@@ -130,7 +130,7 @@ func TestUserAdd(t *testing.T) {
 
 }
 
-func TestFollow(t *testing.T) {
+func TestUser_Follow(t *testing.T) {
 	is := NewItemService(&DynamoConfig{
 		Region: "us-west-2",
 		Url:    "http://localhost:8000",
@@ -144,7 +144,7 @@ func TestFollow(t *testing.T) {
 	phillip.Follow(is, TableName, frodo)
 }
 
-func TestFollowing(t *testing.T) {
+func TestUser_Following(t *testing.T) {
 	is := NewItemService(&DynamoConfig{
 		Region: "us-west-2",
 		Url:    "http://localhost:8000",
@@ -157,7 +157,7 @@ func TestFollowing(t *testing.T) {
 	phillip.Following(is, TableName)
 }
 
-func TestFollowers(t *testing.T) {
+func TestUser_Followers(t *testing.T) {
 	is := NewItemService(&DynamoConfig{
 		Region: "us-west-2",
 		Url:    "http://localhost:8000",
@@ -168,6 +168,19 @@ func TestFollowers(t *testing.T) {
 	})
 	frodo, _ := ByID("4444c44b-c4cc-44bc-4444-44444e4f4f44", is, TableName)
 	frodo.Followers(is, TableName)
+}
+
+func TestUser_Unfollow(t *testing.T) {
+	is := NewItemService(&DynamoConfig{
+		Region: "us-west-2",
+		Url:    "http://localhost:8000",
+		AKID:   "getGudKid",
+		SAC:    "eatMorCrabs",
+		ST:     "thisissuchasecret",
+		Source: "noneofthismattersitsalllocalyfake",
+	})
+	phillip, _ := ByID("3333c33b-c3cc-33bc-3333-33333e3f3f33", is, TableName)
+	phillip.Unfollow(is, TableName, "4444c44b-c4cc-44bc-4444-44444e4f4f44")
 }
 
 //func TestItemService_CreateItem(t *testing.T) {
