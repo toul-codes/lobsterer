@@ -42,6 +42,7 @@ func registerRoutes() *gin.Engine {
 
 	photos := r.Group("/photos", AuthRequired())
 	{
+
 		photos.POST("/", CreatePhoto)
 		photos.GET("/", FetchAllPhotos)
 		photos.GET("/:id", FetchSinglePhoto)

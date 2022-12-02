@@ -126,6 +126,7 @@ func signup(c *gin.Context) {
 	u, _ := models.Exists(usr.Display, is, models.TableName)
 
 	if u == true {
+
 		msg := "This username isn't available. Please try another."
 		sessionStore.AddFlash(msg)
 		c.HTML(http.StatusOK, "signup.html", gin.H{
@@ -165,7 +166,9 @@ func signup(c *gin.Context) {
 	usr.ID = sub // Set user ID to Cognito UUID
 
 	// Create user in DynamoDB
+
 	err = usr.Add(is, models.TableName)
+
 	if err != nil {
 		log.Errorf("That email has been used: %v", err)
 		sessionStore.AddFlash(err)
@@ -182,6 +185,7 @@ func signup(c *gin.Context) {
 	}
 
 	sessionStore.Save()
+
 }
 
 func logout(c *gin.Context) {
@@ -220,7 +224,9 @@ func Profile(c *gin.Context) {
 	//			ComparisonOperator: aws.String("EQ"),
 	//			AttributeValueList: []*dynamodb.AttributeValue{
 	//				{
+
 	//					S: aws.String(usr.ID),
+
 	//				},
 	//			},
 	//		},
