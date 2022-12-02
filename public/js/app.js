@@ -1,5 +1,4 @@
 $(function () {
-
     $("#upload_link").click(function (e) {
         e.preventDefault();
         var text = prompt("File Upload", "Enter a nice caption here...");
