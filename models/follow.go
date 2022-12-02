@@ -12,8 +12,8 @@ import (
 type Follow struct {
 	PK     string `dynamodbav:"PK"`
 	SK     string `dynamodbav:"SK"`
-	GSI1PK string `dynamodbav:"GSI1PK"`
-	GSI1SK string `dynamodbav:"GSI1SK"`
+	GSI2PK string `dynamodbav:"GSI2PK"`
+	GSI2SK string `dynamodbav:"GSI2SK"`
 }
 
 // Follow - creates a user_follows_User record in db
@@ -23,8 +23,8 @@ func (u *User) Follow(svc ItemService, tablename string, fid string) error {
 	f := &Follow{
 		PK:     "F#" + u.ID,
 		SK:     "F#" + fid,
-		GSI1PK: "F#" + fid,
-		GSI1SK: "F#" + u.ID,
+		GSI2PK: "F#" + fid,
+		GSI2SK: "F#" + u.ID,
 	}
 
 	item, err := attributevalue.MarshalMap(f)
@@ -130,8 +130,8 @@ func (u *User) Followers(svc ItemService, tablename string) []User {
 	p := dynamodb.NewQueryPaginator(svc.ItemTable, &dynamodb.QueryInput{
 		TableName:              aws.String(tablename),
 		Limit:                  aws.Int32(5),
-		IndexName:              aws.String("GSI1"),
-		KeyConditionExpression: aws.String("GSI1PK = :hashKey"),
+		IndexName:              aws.String("GSI2"),
+		KeyConditionExpression: aws.String("GSI2PK = :hashKey"),
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":hashKey": &types.AttributeValueMemberS{Value: "F#" + u.ID},
 		},

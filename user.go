@@ -64,6 +64,7 @@ func login(c *gin.Context) {
 		ST:     "thisissuchasecret",
 		Source: "noneofthismattersitsalllocalyfake",
 	})
+
 	if _, err := models.ByName(username, is, models.TableName); err != nil {
 		log.Info("user not found: ", username)
 		sessionStore.AddFlash("User not found")
@@ -205,7 +206,7 @@ func Profile(c *gin.Context) {
 		ST:     "thisissuchasecret",
 		Source: "noneofthismattersitsalllocalyfake",
 	})
-	usr, err := models.ByID(username, is, models.TableName)
+	usr, err := models.ByName(username, is, models.TableName)
 	if err != nil {
 		log.Error("Error:", err)
 		c.HTML(http.StatusOK, "404.html", nil)
