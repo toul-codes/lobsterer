@@ -20,7 +20,7 @@ const (
 )
 
 type ItemService struct {
-	itemTable *dynamodb.Client
+	ItemTable *dynamodb.Client
 }
 
 type DynamoConfig struct {
@@ -35,7 +35,7 @@ type DynamoConfig struct {
 func NewItemService(d *DynamoConfig) ItemService {
 	dt := CreateLocalClient(d)
 	return ItemService{
-		itemTable: dt,
+		ItemTable: dt,
 	}
 }
 
@@ -255,4 +255,14 @@ func DeleteAllItems(d *dynamodb.Client, tableName string) error {
 	}
 	return nil
 
+}
+
+func Delete(d *dynamodb.Client, tableName string) error {
+	_, err := d.DeleteTable(context.TODO(), &dynamodb.DeleteTableInput{
+		TableName: aws.String(tableName),
+	})
+	if err != nil {
+		panic(err)
+	}
+	return nil
 }

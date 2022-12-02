@@ -6,16 +6,13 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	log "github.com/sirupsen/logrus"
 	"time"
 )
 
 const (
-	PKFormat    = "L#%s"
-	SKFormat    = "L#%s"
-	userKey     = "userid"
-	accessToken = "accessToken"
+	PKFormat = "L#%s"
+	SKFormat = "L#%s"
 )
 
 type User struct {
@@ -37,13 +34,6 @@ type User struct {
 	FollowingCount int    `dynamodbav:"following_count"`
 }
 
-type Follow struct {
-	PK     string `dynamodbav:"PK"`
-	SK     string `dynamodbav:"SK"`
-	GSI1PK string `dynamodbav:"GSI1PK"`
-	GSI1SK string `dynamodbav:"GSI1SK"`
-}
-
 // Add - creates user record in table
 func (u *User) Add(svc ItemService, tablename string) error {
 	// use the iso 8601 format so that it is easier to query createdAtTime
@@ -56,7 +46,7 @@ func (u *User) Add(svc ItemService, tablename string) error {
 		fmt.Println("ERR: ", err)
 		panic(err)
 	}
-	_, err = svc.itemTable.PutItem(context.TODO(), &dynamodb.PutItemInput{
+	_, err = svc.ItemTable.PutItem(context.TODO(), &dynamodb.PutItemInput{
 		TableName:           aws.String(tablename),
 		Item:                item,
 		ConditionExpression: aws.String("attribute_not_exists(id)"),
@@ -68,6 +58,16 @@ func (u *User) Add(svc ItemService, tablename string) error {
 	return err
 }
 
+// Update - change a user's attributes
+func (u *User) Update(svc ItemService, tablename string) error {
+	return nil
+}
+
+// Delete - removes a user from Lobsterer DB & Cognito
+func (u *User) Delete(svc ItemService, tablename string) error {
+	return nil
+}
+
 // Exists - checks if username is already taken
 func Exists(name string, svc ItemService, tablename string) (bool, error) {
 	selectedKeys := map[string]string{
@@ -76,7 +76,7 @@ func Exists(name string, svc ItemService, tablename string) (bool, error) {
 	}
 	key, err := attributevalue.MarshalMap(selectedKeys)
 
-	data, err := svc.itemTable.GetItem(context.TODO(), &dynamodb.GetItemInput{
+	data, err := svc.ItemTable.GetItem(context.TODO(), &dynamodb.GetItemInput{
 		TableName: aws.String(tablename),
 		Key:       key,
 	},
@@ -101,7 +101,7 @@ func ByID(ID string, svc ItemService, tablename string) (User, error) {
 	}
 	key, err := attributevalue.MarshalMap(selectedKeys)
 
-	data, err := svc.itemTable.GetItem(context.TODO(), &dynamodb.GetItemInput{
+	data, err := svc.ItemTable.GetItem(context.TODO(), &dynamodb.GetItemInput{
 		TableName: aws.String(tablename),
 		Key:       key,
 	})
@@ -118,223 +118,4 @@ func ByID(ID string, svc ItemService, tablename string) (User, error) {
 	}
 
 	return user, nil
-}
-
-// Follow - creates a user_follows_User record in db
-func (u *User) Follow(svc ItemService, tablename string, fid string) error {
-	// this is only for developing mode to work with GIN will need a session
-	// which isn't great for running a local test programatically
-	f := &Follow{
-		PK:     "F#" + u.ID, // my unique cognito id so can change Display as much as want
-		SK:     "F#" + fid,  // others unique user id so they can do the same
-		GSI1PK: "F#" + fid,  // my unique cognito id so can change Display as much as want
-		GSI1SK: "F#" + u.ID,
-	}
-
-	item, err := attributevalue.MarshalMap(f)
-	if err != nil {
-		fmt.Println("ERR: ", err)
-		panic(err)
-	}
-	tItems := make([]types.TransactWriteItem, 0)
-	tw1 := types.TransactWriteItem{
-		Put: &types.Put{
-			Item:                item,
-			TableName:           aws.String(tablename),
-			ConditionExpression: aws.String("attribute_not_exists(PK)"),
-		},
-	}
-	tw2 := types.TransactWriteItem{
-		Update: &types.Update{
-			Key: map[string]types.AttributeValue{
-				"PK": &types.AttributeValueMemberS{
-					Value: u.PK,
-				},
-				"SK": &types.AttributeValueMemberS{
-					Value: u.SK,
-				},
-			},
-			ConditionExpression: aws.String("attribute_exists(PK)"),
-			TableName:           aws.String(tablename),
-			UpdateExpression:    aws.String("set #following_count = #following_count + :value"),
-			ExpressionAttributeNames: map[string]string{
-				"#following_count": "following_count",
-			},
-			ExpressionAttributeValues: map[string]types.AttributeValue{
-				":value": &types.AttributeValueMemberN{Value: "1"},
-			},
-		},
-	}
-	tw3 := types.TransactWriteItem{
-		Update: &types.Update{
-			Key: map[string]types.AttributeValue{
-				"PK": &types.AttributeValueMemberS{
-					Value: fmt.Sprintf(PKFormat, fid),
-				},
-				"SK": &types.AttributeValueMemberS{
-					Value: fmt.Sprintf(SKFormat, fid),
-				},
-			},
-			TableName:           aws.String(tablename),
-			ConditionExpression: aws.String("attribute_exists(PK)"),
-			UpdateExpression:    aws.String("set #follower_count = #follower_count + :value"),
-			ExpressionAttributeNames: map[string]string{
-				"#follower_count": "follower_count",
-			},
-			ExpressionAttributeValues: map[string]types.AttributeValue{
-				":value": &types.AttributeValueMemberN{Value: "1"},
-			},
-		},
-	}
-	tItems = append(tItems, tw1)
-	tItems = append(tItems, tw2)
-	tItems = append(tItems, tw3)
-
-	_, err = svc.itemTable.TransactWriteItems(context.TODO(), &dynamodb.TransactWriteItemsInput{
-		TransactItems: tItems,
-	})
-
-	if err != nil {
-		log.Printf("\nErr: %v", err)
-	}
-	return err
-}
-
-// Following - who the user is following
-func (u *User) Following(svc ItemService, tablename string) []User {
-	following := make([]User, 0)
-	p := dynamodb.NewQueryPaginator(svc.itemTable, &dynamodb.QueryInput{
-		TableName:              aws.String(tablename),
-		Limit:                  aws.Int32(5),
-		KeyConditionExpression: aws.String("PK = :hashKey"),
-		ExpressionAttributeValues: map[string]types.AttributeValue{
-			":hashKey": &types.AttributeValueMemberS{Value: "F#" + u.ID},
-		},
-	})
-	for p.HasMorePages() {
-		out, err := p.NextPage(context.TODO())
-		if err != nil {
-			fmt.Printf("ERR: %s", err)
-			panic(err)
-		}
-		err = attributevalue.UnmarshalListOfMaps(out.Items, &following)
-		if err != nil {
-			fmt.Printf("ERR: %s", err)
-			panic(err)
-		}
-
-	}
-	for _, user := range following {
-		fmt.Printf("\n%+v", user)
-	}
-
-	return following
-}
-
-// Followers - user's followers
-func (u *User) Followers(svc ItemService, tablename string) []User {
-	followers := make([]User, 0)
-	p := dynamodb.NewQueryPaginator(svc.itemTable, &dynamodb.QueryInput{
-		TableName:              aws.String(tablename),
-		Limit:                  aws.Int32(5),
-		IndexName:              aws.String("GSI1"),
-		KeyConditionExpression: aws.String("GSI1PK = :hashKey"),
-		ExpressionAttributeValues: map[string]types.AttributeValue{
-			":hashKey": &types.AttributeValueMemberS{Value: "F#" + u.ID},
-		},
-	})
-	for p.HasMorePages() {
-		out, err := p.NextPage(context.TODO())
-		if err != nil {
-			fmt.Printf("ERR: %s", err)
-			panic(err)
-		}
-		err = attributevalue.UnmarshalListOfMaps(out.Items, &followers)
-		if err != nil {
-			fmt.Printf("ERR: %s", err)
-			panic(err)
-		}
-
-	}
-	for _, user := range followers {
-		fmt.Printf("\n%+v", user)
-	}
-
-	return followers
-}
-
-// Unfollow - Delete following relationship & decrement following by one
-// Decrement the other person's account by 1 as well
-// Follow - creates a user_follows_User record in db
-func (u *User) Unfollow(svc ItemService, tablename string, fid string) error {
-	tItems := make([]types.TransactWriteItem, 0)
-	// delete it from the main table
-	tw1 := types.TransactWriteItem{
-		Delete: &types.Delete{
-			Key: map[string]types.AttributeValue{
-				"PK": &types.AttributeValueMemberS{
-					Value: "F#" + u.ID,
-				},
-				"SK": &types.AttributeValueMemberS{
-					Value: "F#" + fid,
-				},
-			},
-			TableName:           aws.String(tablename),
-			ConditionExpression: aws.String("attribute_exists(PK)"),
-		},
-	}
-	tw2 := types.TransactWriteItem{
-		Update: &types.Update{
-			Key: map[string]types.AttributeValue{
-				"PK": &types.AttributeValueMemberS{
-					Value: u.PK,
-				},
-				"SK": &types.AttributeValueMemberS{
-					Value: u.SK,
-				},
-			},
-			ConditionExpression: aws.String("attribute_exists(PK)"),
-			TableName:           aws.String(tablename),
-			UpdateExpression:    aws.String("set #following_count = #following_count - :value"),
-			ExpressionAttributeNames: map[string]string{
-				"#following_count": "following_count",
-			},
-			ExpressionAttributeValues: map[string]types.AttributeValue{
-				":value": &types.AttributeValueMemberN{Value: "1"},
-			},
-		},
-	}
-	tw3 := types.TransactWriteItem{
-		Update: &types.Update{
-			Key: map[string]types.AttributeValue{
-				"PK": &types.AttributeValueMemberS{
-					Value: fmt.Sprintf(PKFormat, fid),
-				},
-				"SK": &types.AttributeValueMemberS{
-					Value: fmt.Sprintf(SKFormat, fid),
-				},
-			},
-			TableName:           aws.String(tablename),
-			ConditionExpression: aws.String("attribute_exists(PK)"),
-			UpdateExpression:    aws.String("set #follower_count = #follower_count - :value"),
-			ExpressionAttributeNames: map[string]string{
-				"#follower_count": "follower_count",
-			},
-			ExpressionAttributeValues: map[string]types.AttributeValue{
-				":value": &types.AttributeValueMemberN{Value: "1"},
-			},
-		},
-	}
-	tItems = append(tItems, tw1)
-	tItems = append(tItems, tw2)
-	tItems = append(tItems, tw3)
-
-	_, err := svc.itemTable.TransactWriteItems(context.TODO(), &dynamodb.TransactWriteItemsInput{
-		TransactItems: tItems,
-	})
-
-	if err != nil {
-		log.Printf("\nErr: %v", err)
-	}
-	return err
 }
