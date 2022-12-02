@@ -2,6 +2,8 @@ package main
 
 import (
 	"errors"
+	"fmt"
+	"github.com/toul-codes/lobsterer/models"
 	"net/http"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -31,109 +33,6 @@ const (
 	accessToken = "accessToken"
 )
 
-func signupForm(c *gin.Context) {
-	session := sessions.Default(c)
-	flashes := session.Flashes()
-	session.Save()
-	c.HTML(http.StatusOK, "signup.html", gin.H{"flash": flashes})
-}
-
-func signup(c *gin.Context) {
-	user := &user{
-		FullName: c.PostForm("fullName"),
-		Username: c.PostForm("username"),
-		Email:    c.PostForm("email"),
-	}
-
-	sessionStore := sessions.Default(c)
-	// ask the ddb if the user exists but can instead
-	// use it on create user
-	u, _ := findUserByUsername(user.Username)
-
-	if u != nil {
-		msg := "This username isn't available. Please try another."
-		sessionStore.AddFlash(msg)
-		c.HTML(http.StatusOK, "signup.html", gin.H{
-			"flash": sessionStore.Flashes(),
-			"user":  user,
-		})
-		sessionStore.Save()
-		return
-	}
-
-	cog := NewCognito()
-	password := c.PostForm("password")
-	jwt, err := cog.SignUp(user.Username, password, user.Email, user.FullName)
-
-	if err != nil {
-		msg := err.(awserr.Error).Message()
-		log.Error("SignUp error: ", msg)
-		sessionStore.AddFlash(msg)
-		c.HTML(http.StatusOK, "signup.html", gin.H{
-			"flash": sessionStore.Flashes(),
-			"user":  user,
-		})
-		sessionStore.Save()
-		return
-	}
-
-	log.Info("Creating DB user:", user.Username)
-
-	sub, err := cog.ValidateToken(jwt)
-
-	if err != nil {
-		return
-	}
-
-	log.Info("Cognito 'sub': ", sub)
-
-	user.ID = sub // Set user ID to Cognito UUID
-
-	// Create user in DynamoDB
-	av, err := dynamodbattribute.MarshalMap(user)
-
-	if err != nil {
-		log.Errorf("failed to DynamoDB marshal Record, %v", err)
-		sessionStore.AddFlash(err)
-		c.HTML(http.StatusOK, "signup.html", gin.H{
-			"flash": sessionStore.Flashes(),
-			"user":  user,
-		})
-
-		c.Redirect(http.StatusFound, "/photos")
-		sessionStore.Save()
-		return
-	}
-
-	// TODO create the user in the local test dynamo db for testing
-	sess, _ := session.NewSession(&aws.Config{
-		Region: aws.String("us-west-2"),
-	})
-	svc := dynamodb.New(sess)
-
-	_, err = svc.PutItem(&dynamodb.PutItemInput{
-		TableName: aws.String("PhotosAppUsers"),
-		Item:      av,
-	})
-
-	if err != nil {
-		log.Errorf("Error: %v", err)
-		sessionStore.AddFlash(err)
-		c.HTML(http.StatusOK, "signup.html", gin.H{
-			"flash": sessionStore.Flashes(),
-			"user":  user,
-		})
-	} else {
-		log.Info("Saving userid in session for: ", user.Username)
-		sessionStore.Set(userKey, user.ID)
-		sessionStore.Set(accessToken, jwt)
-		sessionStore.Save()
-		c.Redirect(http.StatusFound, "/photos")
-	}
-
-	sessionStore.Save()
-}
-
 func welcome(c *gin.Context) {
 	session := sessions.Default(c)
 	flashes := session.Flashes()
@@ -157,7 +56,16 @@ func login(c *gin.Context) {
 	sessionStore := sessions.Default(c)
 
 	// Get user by username
-	if _, err := findUserByUsername(username); err != nil {
+	is := models.NewItemService(&models.DynamoConfig{
+		Region: "us-west-2",
+		Url:    "http://localhost:8000",
+		AKID:   "getGudKid",
+		SAC:    "eatMorCrabs",
+		ST:     "thisissuchasecret",
+		Source: "noneofthismattersitsalllocalyfake",
+	})
+	if _, err := models.ByName(username, is, models.TableName); err != nil {
+		log.Info("user not found: ", username)
 		sessionStore.AddFlash("User not found")
 		sessionStore.Save()
 		c.HTML(http.StatusOK, "login.html", gin.H{
@@ -186,9 +94,98 @@ func login(c *gin.Context) {
 			sessionStore.Save()
 			t := sessionStore.Get(accessToken)
 			log.Debug("Testing user in session:", t)
-			c.Redirect(http.StatusFound, "/timeline")
+			c.Redirect(http.StatusFound, "/photos")
 		}
 	}
+}
+
+func signupForm(c *gin.Context) {
+	session := sessions.Default(c)
+	flashes := session.Flashes()
+	session.Save()
+	c.HTML(http.StatusOK, "signup.html", gin.H{"flash": flashes})
+}
+
+func signup(c *gin.Context) {
+	usr := &models.User{
+		Name:    c.PostForm("fullName"),
+		Display: c.PostForm("username"),
+		Email:   c.PostForm("email"),
+	}
+	fmt.Printf("%+v", usr)
+	sessionStore := sessions.Default(c)
+	// rewrite findUserByUserName
+	is := models.NewItemService(&models.DynamoConfig{
+		Region: "us-west-2",
+		Url:    "http://localhost:8000",
+		AKID:   "getGudKid",
+		SAC:    "eatMorCrabs",
+		ST:     "thisissuchasecret",
+		Source: "noneofthismattersitsalllocalyfake",
+	})
+	u, _ := models.Exists(usr.Display, is, models.TableName)
+
+	if u == true {
+
+		msg := "This username isn't available. Please try another."
+		sessionStore.AddFlash(msg)
+		c.HTML(http.StatusOK, "signup.html", gin.H{
+			"flash": sessionStore.Flashes(),
+			"user":  usr,
+		})
+		sessionStore.Save()
+		return
+	}
+
+	cog := NewCognito()
+	password := c.PostForm("password")
+	jwt, err := cog.SignUp(usr.Display, password, usr.Email, usr.Name)
+
+	if err != nil {
+		msg := err.(awserr.Error).Message()
+		log.Error("SignUp error: ", msg)
+		sessionStore.AddFlash(msg)
+		c.HTML(http.StatusOK, "signup.html", gin.H{
+			"flash": sessionStore.Flashes(),
+			"user":  usr,
+		})
+		sessionStore.Save()
+		return
+	}
+
+	log.Info("Creating DB user:", usr.Display)
+
+	sub, err := cog.ValidateToken(jwt)
+
+	if err != nil {
+		return
+	}
+
+	log.Info("Cognito 'sub': ", sub)
+
+	usr.ID = sub // Set user ID to Cognito UUID
+
+	// Create user in DynamoDB
+
+	err = usr.Add(is, models.TableName)
+
+	if err != nil {
+		log.Errorf("That email has been used: %v", err)
+		sessionStore.AddFlash(err)
+		c.HTML(http.StatusOK, "signup.html", gin.H{
+			"flash": sessionStore.Flashes(),
+			"user":  usr,
+		})
+	} else {
+		log.Info("Saving userid in session for: ", usr.Display)
+		sessionStore.Set(userKey, usr.ID)
+		sessionStore.Set(accessToken, jwt)
+		sessionStore.Save()
+		c.Redirect(http.StatusFound, "/photos")
+	}
+
+	sessionStore.Save()
+
 }
 
 func logout(c *gin.Context) {
@@ -202,17 +199,24 @@ func logout(c *gin.Context) {
 // Profile shows the user profile
 // GET /user/:username
 func Profile(c *gin.Context) {
-	//username := c.Params.ByName("username")
-	//
-	//user, err := findUserByUsername(username)
-	//
-	//if err != nil {
-	//	log.Error("Error:", err)
-	//	c.HTML(http.StatusOK, "404.html", nil)
-	//	return
-	//}
-	//
-	//// Find photos by user
+	// check db for username & id?
+	username := c.Params.ByName("username")
+	is := models.NewItemService(&models.DynamoConfig{
+		Region: "us-west-2",
+		Url:    "http://localhost:8000",
+		AKID:   "getGudKid",
+		SAC:    "eatMorCrabs",
+		ST:     "thisissuchasecret",
+		Source: "noneofthismattersitsalllocalyfake",
+	})
+	usr, err := models.ByID(username, is, models.TableName)
+	if err != nil {
+		log.Error("Error:", err)
+		c.HTML(http.StatusOK, "404.html", nil)
+		return
+	}
+
+	// TODO rewrite this to  Find molts by user
 	//queryInput := &dynamodb.QueryInput{
 	//	TableName: aws.String("PhotosAppPhotos"),
 	//	KeyConditions: map[string]*dynamodb.Condition{
@@ -220,84 +224,26 @@ func Profile(c *gin.Context) {
 	//			ComparisonOperator: aws.String("EQ"),
 	//			AttributeValueList: []*dynamodb.AttributeValue{
 	//				{
-	//					S: aws.String(user.ID),
+
+	//					S: aws.String(usr.ID),
+
 	//				},
 	//			},
 	//		},
 	//	},
 	//	IndexName: aws.String("UserID-index"),
 	//}
-	//
-	//sess, _ := session.NewSession(&aws.Config{
-	//	Region: aws.String("us-west-2"),
-	//})
-	//svc := dynamodb.New(sess)
-	//
-	//qo, err := svc.Query(queryInput)
-	//
-	//if err != nil {
-	//	log.Errorf("Error: %v", err)
-	//	c.HTML(http.StatusOK, "404.html", nil)
-	//	return
-	//}
-	//
-	//photos := []photo{}
-	//err = dynamodbattribute.UnmarshalListOfMaps(qo.Items, &photos)
-	//if err != nil {
-	//	log.Errorf("failed to unmarshal Query result items, %v", err)
-	//	c.HTML(http.StatusOK, "404.html", nil)
-	//	return
-	//}
-	//
-	//sessionStore := sessions.Default(c)
-	//uid := sessionStore.Get(userKey)
+
+	sessionStore := sessions.Default(c)
+	uid := sessionStore.Get(userKey)
 	//currentUser, _ := findUserByID(uid.(string))
 
-	c.HTML(http.StatusOK, "timeline.html", gin.H{})
-}
-
-func findUserByUsername(username string) (*user, error) {
-
-	sess, _ := session.NewSession(&aws.Config{
-		Region: aws.String("us-west-2"),
+	//  have usr  data so can pass it to the user.html
+	c.HTML(http.StatusOK, "user.html", gin.H{
+		"user":        usr,
+		"IsSelf":      uid == usr.ID,
+		"CurrentUser": usr,
 	})
-	svc := dynamodb.New(sess)
-
-	queryInput := &dynamodb.QueryInput{
-		TableName: aws.String("PhotosAppUsers"),
-		Limit:     aws.Int64(1),
-		KeyConditions: map[string]*dynamodb.Condition{
-			"Username": {
-				ComparisonOperator: aws.String("EQ"),
-				AttributeValueList: []*dynamodb.AttributeValue{
-					{
-						S: aws.String(username),
-					},
-				},
-			},
-		},
-		IndexName: aws.String("Username-index"),
-	}
-
-	qo, err := svc.Query(queryInput)
-
-	if err != nil {
-		log.Errorf("FindUserByUsername failed: %v", err)
-		return nil, err
-	}
-
-	users := []user{}
-	if err := dynamodbattribute.UnmarshalListOfMaps(qo.Items, &users); err != nil {
-		log.Errorf("Failed to unmarshal Query result items, %v", err)
-		return nil, err
-	}
-
-	if len(users) == 0 {
-		// Returned no users
-		return nil, errors.New("User not found")
-	}
-
-	return &users[0], nil
 }
 
 func findUserByID(id string) (*user, error) {
@@ -388,7 +334,6 @@ func Follow(c *gin.Context) {
 	}
 
 	// Insert follower into DynamoDB
-
 	av, err := dynamodbattribute.MarshalMap(follower)
 
 	if err != nil {

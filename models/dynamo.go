@@ -3,6 +3,7 @@ package models
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/aws/transport/http"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -14,8 +15,12 @@ import (
 	"strings"
 )
 
+const (
+	TableName = "Lobsterer-Test"
+)
+
 type ItemService struct {
-	itemTable *dynamodb.Client
+	ItemTable *dynamodb.Client
 }
 
 type DynamoConfig struct {
@@ -30,7 +35,7 @@ type DynamoConfig struct {
 func NewItemService(d *DynamoConfig) ItemService {
 	dt := CreateLocalClient(d)
 	return ItemService{
-		itemTable: dt,
+		ItemTable: dt,
 	}
 }
 
@@ -65,6 +70,20 @@ func CreateTableIfNotExists(d *dynamodb.Client, tableName string) {
 		log.Fatal("CreateTable failed", err)
 	}
 	log.Printf("created table=%v\n", tableName)
+}
+
+func Print(d *dynamodb.Client, tableName string) {
+	out, err := d.Scan(context.TODO(), &dynamodb.ScanInput{
+		TableName: aws.String(tableName),
+	})
+	if err != nil {
+		fmt.Printf("Err: %s", err)
+	}
+	for _, item := range out.Items {
+		for k, v := range item {
+			fmt.Printf("\n k:%s, v:%s", k, v)
+		}
+	}
 }
 
 func tableExists(d *dynamodb.Client, name string) bool {
@@ -236,4 +255,14 @@ func DeleteAllItems(d *dynamodb.Client, tableName string) error {
 	}
 	return nil
 
+}
+
+func Delete(d *dynamodb.Client, tableName string) error {
+	_, err := d.DeleteTable(context.TODO(), &dynamodb.DeleteTableInput{
+		TableName: aws.String(tableName),
+	})
+	if err != nil {
+		panic(err)
+	}
+	return nil
 }
