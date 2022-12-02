@@ -6,7 +6,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	log "github.com/sirupsen/logrus"
 	"time"
 )
@@ -17,11 +16,9 @@ const (
 )
 
 type User struct {
-	ID             string `dynamodbav:"id"`
 	PK             string `dynamodbav:"PK"`
 	SK             string `dynamodbav:"SK"`
-	GSI1PK         string `dynamodbav:"GSI1PK"`
-	GSI1SK         string `dynamodbav:"GSI1SK"`
+	ID             string `dynamodbav:"id"`
 	Created        string `dynamodbav:"created"`
 	Name           string `dynamodbav:"name"`
 	Email          string `dynamodbav:"email"`
@@ -35,7 +32,6 @@ type User struct {
 	Deleted        bool   `dynamodbav:"deleted"`
 	FollowerCount  int    `dynamodbav:"follower_count"`
 	FollowingCount int    `dynamodbav:"following_count"`
-	MoltCount      int    `dynamodbav:"molt_count"`
 }
 
 // Add - creates user record in table
@@ -43,11 +39,8 @@ func (u *User) Add(svc ItemService, tablename string) error {
 	// use the iso 8601 format so that it is easier to query createdAtTime
 	u.Created = fmt.Sprintf(time.Now().Format(time.RFC3339))
 	// the Composite primary key is created by concatenating display to L#
-	u.PK = fmt.Sprintf(PKFormat, u.ID) // search by id
+	u.PK = fmt.Sprintf(PKFormat, u.ID)
 	u.SK = fmt.Sprintf(SKFormat, u.ID)
-	u.GSI1PK = u.Display                   // search by username
-	u.GSI1SK = fmt.Sprintf(PKFormat, u.ID) // return the userID
-
 	item, err := attributevalue.MarshalMap(u)
 	if err != nil {
 		fmt.Println("ERR: ", err)
@@ -99,7 +92,7 @@ func Exists(name string, svc ItemService, tablename string) (bool, error) {
 	return true, nil
 }
 
-// ByID - retrieves a user's record from the table ByID
+// ByID - retrieves a user's record from the table
 func ByID(ID string, svc ItemService, tablename string) (User, error) {
 	user := User{}
 	selectedKeys := map[string]string{
@@ -125,26 +118,4 @@ func ByID(ID string, svc ItemService, tablename string) (User, error) {
 	}
 
 	return user, nil
-}
-
-// ByName - pass in username and get user account
-func ByName(name string, svc ItemService, tablename string) (User, error) {
-	user := make([]User, 0)
-	ut, err := svc.ItemTable.Query(context.TODO(), &dynamodb.QueryInput{
-		TableName:              aws.String(tablename),
-		IndexName:              aws.String("GSI1"),
-		KeyConditionExpression: aws.String("GSI1PK = :gsi1pk"),
-		ExpressionAttributeValues: map[string]types.AttributeValue{
-			":gsi1pk": &types.AttributeValueMemberS{Value: name},
-		},
-	})
-	if err != nil {
-		panic(err)
-	}
-	err = attributevalue.UnmarshalListOfMaps(ut.Items, &user)
-	if err != nil {
-		fmt.Errorf("UnmarshalMap: %v\n", err)
-	}
-
-	return user[0], nil
 }

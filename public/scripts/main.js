@@ -175,6 +175,7 @@ function updateNewMoltIndicator(molt_count) {
     }
 }
 
+
 function updateImgPreview(imgInput) {
     var imgPreview = $(imgInput.form).find(".img-preview");
     var closeButton = $(imgInput.form).find(".close-file-btn");
