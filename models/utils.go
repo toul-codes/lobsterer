@@ -24,8 +24,8 @@ func CleanUp() {
 	}
 }
 
-// TestSetUp - is used for tests and requires Local DynamoDB docker container to be running
-func TestSetUp() {
+// SetUp - is used for tests and requires Local DynamoDB docker container to be running
+func SetUp() {
 	charRunes := []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 	is := LocalService()
 	// Delete table
@@ -37,10 +37,14 @@ func TestSetUp() {
 	// will keep this small for faster test times
 	for i := 0; i < 10; i++ {
 		u := User{
+			PK:             "",
+			SK:             "",
 			ID:             strconv.Itoa(i),
+			GSI1PK:         "",
+			GSI1SK:         "",
 			Name:           RandStringRunes(10, charRunes),
 			Email:          "",
-			Display:        "",
+			Display:        RandStringRunes(5, charRunes),
 			Description:    "",
 			Verified:       false,
 			Avatar:         "",
@@ -50,6 +54,8 @@ func TestSetUp() {
 			Deleted:        false,
 			FollowerCount:  0,
 			FollowingCount: 0,
+			MoltCount:      0,
+			LikeCount:      0,
 		}
 		// add them to the table
 		u.Add(is, TableName)

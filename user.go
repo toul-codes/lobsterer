@@ -166,7 +166,6 @@ func signup(c *gin.Context) {
 	usr.ID = sub // Set user ID to Cognito UUID
 
 	// Create user in DynamoDB
-
 	err = usr.Add(is, models.TableName)
 
 	if err != nil {
@@ -209,7 +208,7 @@ func Profile(c *gin.Context) {
 		ST:     "thisissuchasecret",
 		Source: "noneofthismattersitsalllocalyfake",
 	})
-	usr, err := models.ByID(username, is, models.TableName)
+	usr, err := models.ByName(username, is, models.TableName)
 	if err != nil {
 		log.Error("Error:", err)
 		c.HTML(http.StatusOK, "404.html", nil)

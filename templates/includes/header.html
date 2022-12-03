@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Lobsterer</title>
+  <link rel="shortcut icon" href="https://cdn.crabber.net/img/favicon.svg" type="image/svg+xml">
+  <link rel="alternate icon" href="https://cdn.crabber.net/img/favicon.png">
+
+  <!-- Search Engine Metadata -->
+  <meta name="description" content="Crabber is a friendly open-source micro-blogging platform powered by Crabs.">
+  <meta name="tags" content="crabber, twitter, micro-blogging, crabs, twitter alternative, open-source, social, social media, social network, mastodon, privacy">
+  <meta name="author" content="">
+
+  <!-- Mobile web app -->
+  <link rel="manifest" href="https://cdn.crabber.net/manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="apple-touch-icon" href="https://cdn.crabber.net/img/icon.jpg">
+  <link rel="apple-touch-startup-image" href="https://cdn.crabber.net/img/launch.png">
+  <meta name="apple-mobile-web-app-title" content="Crabber">
+
+  <!-- Required meta tags -->
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="frame-src *.hcaptcha.com youtube-nocookie.com www.youtube-nocookie.com giphy.com;" >
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, user-scalable=no">
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+        integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-3.4.1.min.js"
+          integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/public/css/style.css">
+  <link rel="stylesheet" href="/public/css/color_overrides.css">
+
+</head>
+{{ if .user }}
+{{template "nav.html" .}}
+{{ end }}

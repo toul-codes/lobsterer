@@ -13,7 +13,7 @@ import (
 
 func TestDeleteAllItems(t *testing.T) {
 	is := LocalService()
-	TestSetUp()
+	SetUp()
 	err := DeleteAllItems(is.ItemTable, TableName)
 	if err != nil {
 		log.Fatal("failed to delete all items", err)
@@ -35,7 +35,7 @@ func TestNewItemService(t *testing.T) {
 
 func TestByID(t *testing.T) {
 	is := LocalService()
-	TestSetUp()
+	SetUp()
 	want := strconv.Itoa(rand.Intn(10))
 	got, _ := ByID(want, is, TableName)
 	if got.ID != want {
@@ -44,15 +44,31 @@ func TestByID(t *testing.T) {
 	CleanUp()
 }
 
+func TestByName(t *testing.T) {
+	is := LocalService()
+	SetUp()
+	n := strconv.Itoa(rand.Intn(10))
+	uByID, _ := ByID(n, is, TableName)
+	uByName, _ := ByName(uByID.Display, is, TableName)
+	if uByID.ID != uByName.ID {
+		fmt.Errorf("byID: %+v, byName: %+v", uByID, uByName)
+	}
+	if uByID.Display != uByName.Display {
+		fmt.Errorf("byID: %+v, byName: %+v", uByID, uByName)
+	}
+	fmt.Printf("byID: %+v, byName: %+v", uByID, uByName)
+	CleanUp()
+}
+
 func TestUser_Add(t *testing.T) {
 	// adds users
-	TestSetUp()
+	SetUp()
 	CleanUp()
 }
 
 func TestUser_Following(t *testing.T) {
 	is := LocalService()
-	TestSetUp()
+	SetUp()
 	// get first user
 	f, _ := ByID("1", is, TableName)
 	// follow second user
@@ -67,7 +83,7 @@ func TestUser_Following(t *testing.T) {
 
 func TestUser_Follow(t *testing.T) {
 	is := LocalService()
-	TestSetUp()
+	SetUp()
 	f, _ := ByID("1", is, TableName)
 	want := 1
 	f.Follow(is, TableName, "2")
@@ -83,7 +99,7 @@ func TestUser_Follow(t *testing.T) {
 
 func TestUser_Unfollow(t *testing.T) {
 	is := LocalService()
-	TestSetUp()
+	SetUp()
 	f, _ := ByID("1", is, TableName)
 	// follow second user
 	f.Follow(is, TableName, "2")
