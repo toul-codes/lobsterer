@@ -521,17 +521,13 @@
           </div>
           {{ end }}
           <div class="rounded-circle profile-picture shadow-expand">
-            <img src="{{ .user.Avatar}}"
+            <img src="https://lobsterer-avatars.s3.us-west-2.amazonaws.com/{{ .user.Avatar }}"
                  style="border-radius: 100%;">
           </div>
         </div>
         <div class="profile-box-follow-row d-flex flex-row justify-content-end">
           <!-- Display correct follow button if page is not current user -->
           {{ if not .IsSelf }}
-          <button type="submit" class="btn btn-primary rounded-pill" onclick="location.href='/login'">
-            <strong>Log in to follow users</strong>
-          </button>
-          {{ else }}
           <form method="POST">
             <input type="hidden" name="target_user" value="{{ .user.ID }}">
             <!-- Follow/Unfollow button -->
@@ -541,11 +537,7 @@
                   Follow
                 </strong>
               </button>
-              <button name="user_action" value="unfollow" type="submit" class="btn btn-primary rounded-pill unfollow-btn">
-                <strong class="default-text">Following</strong>
-                <strong class="hover-text">Unfollow</strong>
-                {{ end }}
-              </button>
+              {{ end }}
             </div>
           </form>
           <form method="POST" onsubmit="return savedescription()">
@@ -752,7 +744,7 @@
       <div class="modal-body">
         <p class="text-muted">Recommended size: 500x500</p>
         <!-- Avatar upload form -->
-        <form method="POST" enctype="multipart/form-data">
+        <form id="uploadForm" action="/user" method="POST" enctype="multipart/form-data">
           <input type="hidden" name="user_action" value="change_avatar">
           <div class="mb-2 input-group cool-input">
             <div class="input-group-prepend">
@@ -765,7 +757,7 @@
           </div>
           <div class="d-flex flex-row justify-content-between">
             <div class="d-inline-block profile-file-select">
-              <input name="file" class="text-muted file-input" type="file" accept="image/x-png,image/jpeg, image/png" required>
+              <input id="upload" type="file" name="photofile" class="text-muted file-input" onchange="form.submit()" accept="image/x-png,image/jpeg, image/png" required>
             </div>
             <div class="d-inline-block">
               <button type="submit" onclick="$(this).children().text('Posting..')" class="btn btn-primary rounded-pill mini-btn"><strong>Upload</strong></button>

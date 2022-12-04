@@ -11,6 +11,11 @@ import (
 	"testing"
 )
 
+func TestPrint(t *testing.T) {
+	is := LocalService()
+	Print(is.ItemTable, TableName)
+}
+
 func TestDeleteAllItems(t *testing.T) {
 	is := LocalService()
 	SetUp()

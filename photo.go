@@ -176,7 +176,6 @@ func FetchSinglePhoto(c *gin.Context) {
 // CreatePhoto saves the file to disk, generates its thumbnails, and stores
 // metadata in the database.
 func CreatePhoto(c *gin.Context) {
-
 	sessionStore := sessions.Default(c)
 	jwt := sessionStore.Get(accessToken)
 	cog := NewCognito()
@@ -207,7 +206,6 @@ func CreatePhoto(c *gin.Context) {
 	log.Info("Caption:", caption)
 
 	// Upload file to S3 bucket
-
 	sess, _ := session.NewSession(&aws.Config{
 		Region: aws.String("us-west-2"),
 	})

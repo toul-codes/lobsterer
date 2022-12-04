@@ -1,10 +1,15 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
-	"github.com/toul-codes/lobsterer/models"
-	"net/http"
+	"mime"
+	"path/filepath"
+
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -14,6 +19,8 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
+	"github.com/toul-codes/lobsterer/models"
+	"net/http"
 )
 
 type user struct {
@@ -243,6 +250,69 @@ func Profile(c *gin.Context) {
 		"IsSelf":      uid == usr.ID,
 		"CurrentUser": usr,
 	})
+}
+
+// ChangeAvatar - removes a user from Lobsterer DB & Cognito
+func ChangeAvatar(c *gin.Context) {
+	sessionStore := sessions.Default(c)
+	jwt := sessionStore.Get(accessToken)
+	cog := NewCognito()
+	sub, err := cog.ValidateToken(jwt.(string))
+	uid := fmt.Sprintf("%s", sessionStore.Get(userKey))
+	fmt.Printf("%s", uid)
+
+	_, err = c.MultipartForm()
+
+	if err != nil {
+		c.String(http.StatusBadRequest, fmt.Sprintf("get form err: %s", err.Error()))
+		return
+	}
+
+	file, header, err := c.Request.FormFile("photofile")
+
+	if err != nil {
+		log.Errorf("Error uploading file %v", err)
+		return
+	}
+
+	defer file.Close()
+
+	// Upload file to S3 bucket
+	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion("us-west-2"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	awsS3Client := s3.NewFromConfig(cfg)
+	key := sub + "/" + header.Filename
+	uploader := manager.NewUploader(awsS3Client)
+
+	_, err = uploader.Upload(context.TODO(), &s3.PutObjectInput{
+		Bucket:      aws.String("lobsterer-avatars"),
+		Key:         aws.String(key),
+		Body:        file,
+		ContentType: aws.String(mime.TypeByExtension(filepath.Ext(header.Filename))),
+	})
+
+	if err != nil {
+		log.Errorf("Unable to upload file %q, %v", header.Filename, err)
+		c.String(http.StatusBadRequest, fmt.Sprintf("Upload file err: %s", err.Error()))
+		return
+	}
+
+	log.Info("Uploaded file:", header.Filename)
+
+	// Insert DB record for photo and user
+	// update the avatar url for the user
+	svc := models.LocalService()
+	u, _ := models.ByID(uid, svc, models.TableName)
+	fmt.Printf("\nUSER: +v", u)
+	err = u.Update(svc, models.TableName, key)
+	if err != nil {
+		c.String(http.StatusBadRequest, fmt.Sprintf("Insert photo err: %s", err.Error()))
+		fmt.Print("err", err)
+	}
+	// refresh page
+	c.Redirect(http.StatusFound, "/user/taco")
 }
 
 func findUserByID(id string) (*user, error) {
