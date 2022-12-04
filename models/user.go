@@ -68,7 +68,7 @@ func (u *User) Add(svc ItemService, tablename string) error {
 }
 
 // Update - change a user's string attributes
-func (u *User) Update(svc ItemService, tablename string, url string) error {
+func (u *User) UpdateAvatar(svc ItemService, tablename string, url string) error {
 	// update the user by the attrName
 	out, err := svc.ItemTable.UpdateItem(context.TODO(), &dynamodb.UpdateItemInput{
 		TableName: aws.String(tablename),
@@ -79,6 +79,28 @@ func (u *User) Update(svc ItemService, tablename string, url string) error {
 		UpdateExpression: aws.String("set avatar = :avatar"),
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":avatar": &types.AttributeValueMemberS{Value: url},
+		},
+	})
+
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(out.Attributes)
+	return nil
+}
+
+func (u *User) UpdateBanner(svc ItemService, tablename string, url string) error {
+	// update the user by the attrName
+	out, err := svc.ItemTable.UpdateItem(context.TODO(), &dynamodb.UpdateItemInput{
+		TableName: aws.String(tablename),
+		Key: map[string]types.AttributeValue{
+			"PK": &types.AttributeValueMemberS{Value: u.PK},
+			"SK": &types.AttributeValueMemberS{Value: u.SK},
+		},
+		UpdateExpression: aws.String("set banner = :banner"),
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":banner": &types.AttributeValueMemberS{Value: url},
 		},
 	})
 

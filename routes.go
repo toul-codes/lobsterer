@@ -34,10 +34,11 @@ func registerRoutes() *gin.Engine {
 
 	user := r.Group("/user", AuthRequired())
 	{
+		user.POST("/avatar", ChangeAvatar)
+		user.POST("/banner", ChangeBanner)
 		user.GET("/:username", Profile)
-		user.POST("/", ChangeAvatar)
-		user.POST("/:id/follow", Follow)
-		user.POST("/:id/unfollow", Unfollow)
+		//user.POST("/:id/follow", Follow)
+		//user.POST("/:id/unfollow", Unfollow)
 	}
 
 	photos := r.Group("/photos", AuthRequired())

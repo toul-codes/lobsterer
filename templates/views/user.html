@@ -508,7 +508,7 @@
             </svg>
           </div>
           {{ end }}
-          <img class="profile-banner" src="{{ .user.Banner }}" />
+          <img class="profile-banner" src="https://lobsterer-avatars.s3.us-west-2.amazonaws.com/{{ .user.Banner }}" />
         </div>
         <div class="profile-box-bio px-2 pt-2">
           <div class="profile-box-avatar d-block w-25 force-square profile-box-shadow rounded-circle ">
@@ -755,7 +755,7 @@
       <div class="modal-body">
         <p class="text-muted">Recommended size: 500x500</p>
         <!-- Avatar upload form -->
-        <form id="uploadForm" action="/user" method="POST" enctype="multipart/form-data">
+        <form id="uploadForm" action="/user/avatar" method="POST" enctype="multipart/form-data">
           <input type="hidden" name="user_action" value="change_avatar">
           <div class="mb-2 input-group cool-input">
             <div class="input-group-prepend">
@@ -793,7 +793,7 @@
       <div class="modal-body">
         <p class="text-muted">Recommended size: 1500x500</p>
         <!-- Banner upload form -->
-        <form method="POST" enctype="multipart/form-data">
+        <form id="uploadForm" action="/user/banner" method="POST" enctype="multipart/form-data">
           <input type="hidden" name="user_action" value="change_banner">
           <div class="mb-2 input-group cool-input">
             <div class="input-group-prepend">
@@ -806,7 +806,7 @@
           </div>
           <div class="d-flex flex-row justify-content-between">
             <div class="d-inline-block profile-file-select">
-              <input name="file" class="text-muted file-input" type="file" accept="image/x-png,image/jpeg, image/png" required>
+              <input id="bannerupload" type="file" name="bannerfile" class="text-muted file-input" onchange="form.submit()" accept="image/x-png,image/jpeg, image/png" required>
             </div>
             <div class="d-inline-block">
               <button type="submit" onclick="$(this).children().text('Posting..')" class="btn btn-primary rounded-pill mini-btn"><strong>Upload</strong></button>
