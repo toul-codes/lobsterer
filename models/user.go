@@ -27,12 +27,13 @@ type User struct {
 	Email          string `dynamodbav:"email"`
 	Display        string `dynamodbav:"display"`
 	Description    string `dynamodbav:"description"`
-	Verified       bool   `dynamodbav:"verified"`
 	Banner         string `dynamodbav:"banner"`
 	Avatar         string `dynamodbav:"avatar"`
-	Banned         bool   `dynamodbav:"banned"`
 	Website        string `dynamodbav:"website"`
+	Verified       bool   `dynamodbav:"verified"`
+	Banned         bool   `dynamodbav:"banned"`
 	Deleted        bool   `dynamodbav:"deleted"`
+	Moderator      bool   `dynamodbav:"moderator"`
 	FollowerCount  int    `dynamodbav:"follower_count"`
 	FollowingCount int    `dynamodbav:"following_count"`
 	MoltCount      int    `dynamodbav:"molt_count"`

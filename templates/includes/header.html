@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Lobsterer</title>
+  <title>{{ .user.Display }} (@{{ .user.Display }}) | Lobsterer</title>
   <link rel="shortcut icon" href="https://cdn.crabber.net/img/favicon.svg" type="image/svg+xml">
   <link rel="alternate icon" href="https://cdn.crabber.net/img/favicon.png">
 
@@ -34,6 +34,15 @@
   <!-- Custom CSS -->
   <link rel="stylesheet" href="/public/css/style.css">
   <link rel="stylesheet" href="/public/css/color_overrides.css">
+
+  <!-- Custom scripts -->
+  <script src="/public/scripts/bundle.js"></script>
+  <script src="/public/scripts/holiday_modes.js"></script>
+  <script src="/public/scripts/main.js"></script>
+  <script src="/public/scripts/ajax.js"></script>
+  <script src="/public/scripts/lastfm.js"></script>
+  <script src="/public/scripts/highlight.js"></script>
+  <script src="/public/scripts/toast.js"></script>
 
 </head>
 {{ if .user }}
