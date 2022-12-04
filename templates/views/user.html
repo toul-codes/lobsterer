@@ -528,6 +528,14 @@
         <div class="profile-box-follow-row d-flex flex-row justify-content-end">
           <!-- Display correct follow button if page is not current user -->
           {{ if not .IsSelf }}
+          <button type="submit" class="btn btn-primary rounded-pill" onclick="location.href='/login'">
+            <button name="user_action" value="follow" type="submit" class="btn btn-outline-primary rounded-pill follow-btn">
+              <strong>
+                Follow
+              </strong>
+            </button>
+          </button>
+          {{ else }}
           <form method="POST">
             <input type="hidden" name="target_user" value="{{ .user.ID }}">
             <!-- Follow/Unfollow button -->
@@ -537,7 +545,10 @@
                   Follow
                 </strong>
               </button>
-              {{ end }}
+              <button name="user_action" value="unfollow" type="submit" class="btn btn-primary rounded-pill unfollow-btn">
+                <strong class="defalt-text">Unfollow</strong>
+                {{ end }}
+              </button>
             </div>
           </form>
           <form method="POST" onsubmit="return savedescription()">
