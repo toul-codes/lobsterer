@@ -1,0 +1,61 @@
+<!-- Additional Panel -->
+<div class="d-none d-lg-block col-2 col-xl-3 ml-2 p-1 pt-2" id="add-panel">
+  {{ if .IsSelf }}
+  <!-- Search bar -->
+  <form action="/search/" method="GET">
+    <div class="rounded-pill search-box mini-compose-box px-3 p-2 d-flex flex-row">
+      <svg class="mr-2" width="28" height="28" data-jam="search">
+        <use href="#search">
+      </svg>
+      <input class="w-100" type="text" name="q" placeholder="Search Crabber" required>
+    </div>
+  </form>
+  {{ end }}
+
+  {{ if .IsSelf }}
+  <!-- Who to follow -->
+  <div class="panel d-none d-xl-block" id="recommended-crabs">
+    <div class="panel-title">
+                            <span>
+                                Who to follow
+                            </span>
+    </div>
+
+    <div class="recommended-crab">
+      your dreams 
+    </div>
+    your dreams 
+  </div>
+  {{ end }}
+
+  {{ if .IsSelf }}
+  <!-- Trending Crabtags -->
+  <div class="panel" id="trending">
+    <div class="panel-title">
+          <span>
+            Trending
+          </span>
+    </div>
+
+    <p class="text-muted nothing">
+      Nothing right now.
+    </p>
+  </div>
+  {{ end }}
+
+
+  <!-- Copyright footer -->
+  <div id="nav-footer" class="text-muted-more d-none d-lg-block absolute-bottom mb-3">
+    <small class="mb-2 d-block"> since last server restart.</small>
+    <small>&copy; Copyright 2022, Lobsterer</small>
+    <br>
+    <small>
+      Crabber is open-source and non-profit.
+      <a href="https://github.com/toul-codes/lobsterer">Fork on GitHub</a>
+    </small>
+    <br>
+    <small>
+      <a href="/legal/TOS" target="_blank">Terms of Service</a>
+    </small>
+  </div>
+</div>
