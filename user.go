@@ -282,7 +282,7 @@ func Settings(c *gin.Context) {
 	})
 }
 
-// ChangeAvatar - removes a user from Lobsterer DB & Cognito
+// ChangeAvatar - adds avatar url to users profile
 func ChangeAvatar(c *gin.Context) {
 	sessionStore := sessions.Default(c)
 	jwt := sessionStore.Get(accessToken)
@@ -335,7 +335,7 @@ func ChangeAvatar(c *gin.Context) {
 	svc := models.LocalService()
 	u, _ := models.ByID(uid, svc, models.TableName)
 	fmt.Printf("\nUSER: +v", u)
-	err = u.UpdateAvatar(svc, models.TableName, key)
+	err = u.UpdateStrAttr(svc, models.TableName, "avatar", key)
 	if err != nil {
 		c.String(http.StatusBadRequest, fmt.Sprintf("Insert photo err: %s", err.Error()))
 		fmt.Print("err", err)
@@ -344,6 +344,7 @@ func ChangeAvatar(c *gin.Context) {
 	c.Redirect(http.StatusFound, "/user/taco")
 }
 
+// ChangeBanner - adds banner url to the users profile
 func ChangeBanner(c *gin.Context) {
 	sessionStore := sessions.Default(c)
 	jwt := sessionStore.Get(accessToken)
@@ -396,7 +397,7 @@ func ChangeBanner(c *gin.Context) {
 	svc := models.LocalService()
 	u, _ := models.ByID(uid, svc, models.TableName)
 	fmt.Printf("\nUSER: +v", u)
-	err = u.UpdateBanner(svc, models.TableName, key)
+	err = u.UpdateStrAttr(svc, models.TableName, "banner", key)
 	if err != nil {
 		c.String(http.StatusBadRequest, fmt.Sprintf("Insert photo err: %s", err.Error()))
 		fmt.Print("err", err)
