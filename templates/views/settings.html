@@ -1,0 +1,665 @@
+{{template "header.html" .}}
+<body class="bg-dark text-light">
+<div class="container-fluid vh-100 master-container">
+    <div class="row h-100 justify-content-center">
+        <!-- Nav Panel -->
+        <div class="col-1 col-lg-3 p-1" id="nav-panel">
+            <!-- Logo -->
+            <svg class="mt-2 d-block mx-auto d-lg-inline logo clickable"
+                 xmlns="http://www.w3.org/2000/svg" viewBox="0 0 999.938 1000"
+                 alt="Crabber Logo" width="32" height="32"
+                 onclick="location.href='/'">
+                <path id="limbs_copy" data-name="limbs copy" class="cls-1" d="M357.1,406.067a41.293,41.293,0,1,1,41.273-41.292A41.282,41.282,0,0,1,357.1,406.067Zm327.19-41.292a41.273,41.273,0,1,1-41.272-41.293A41.282,41.282,0,0,1,684.287,364.775Zm130.4,158.588c-0.12,0-.239,0-0.358-0.005a202.129,202.129,0,0,1-37.678,8.857c-0.637,4-1.332,8-2.06,11.948,0.36,0.109.725,0.2,1.084,0.314-0.882,5.805-1.967,11.541-3.208,17.218a97.813,97.813,0,0,1,33.846-6.016q4.622,0,9.138.424a223.9,223.9,0,0,1,184.534,47.039,183.887,183.887,0,0,1-156.733-5.8,155.889,155.889,0,0,1-83.6,24.163c-2.6,0-5.173-.087-7.739-0.212a271.7,271.7,0,0,1-13.457,24.638c4.832-.314,9.7-0.488,14.616-0.488a223.545,223.545,0,0,1,32.967,2.435c1.171-.024,2.344-0.042,3.52-0.042,94.61,0,173.532,67.017,192.044,156.18a87,87,0,0,0-76.58-28.551,312.577,312.577,0,0,1-94.861-82.632,499.26,499.26,0,0,1-127.874,18.379,270.393,270.393,0,0,1-41.444,28.862A302.891,302.891,0,0,1,734.7,757.092c-0.019-.071-0.042-0.141-0.062-0.212A135.2,135.2,0,0,1,864.93,892.005c0,5-1.4,9.132-1.93,14-0.1.333-.018-0.182,0.086,0.338a151.11,151.11,0,0,1-44.907,64.152,101.138,101.138,0,0,0-4.042-93.986,233.149,233.149,0,0,1-64.025-79.2A196.289,196.289,0,0,1,568.848,769.76a281.269,281.269,0,0,1-137.157.1,196.294,196.294,0,0,1-181.726,27.865,233.273,233.273,0,0,1-64.045,79.246,101.22,101.22,0,0,0-4.043,94.04,151.191,151.191,0,0,1-44.921-64.188c-0.342.154,0.387,0.022,0.044,0.174-0.529-4.866-1.888-9.509-1.888-14.516a135.256,135.256,0,0,1,130.333-135.2c-0.02.071-.043,0.141-0.062,0.211a302.894,302.894,0,0,1,93.88-17.024,270.421,270.421,0,0,1-41.457-28.879A499.208,499.208,0,0,1,189.893,693.2,312.678,312.678,0,0,1,95,775.881a87,87,0,0,0-76.6,28.567C36.917,715.235,115.863,648.18,210.5,648.18c1.177,0,2.35.018,3.521,0.042A223.557,223.557,0,0,1,247,645.785c4.913,0,9.786.174,14.62,0.489a271.728,271.728,0,0,1-13.461-24.652c-2.567.125-5.143,0.212-7.741,0.212A155.905,155.905,0,0,1,156.8,597.657a183.9,183.9,0,0,1-156.781,5.8,223.911,223.911,0,0,1,184.59-47.066q4.515-.418,9.142-0.425a97.8,97.8,0,0,1,33.855,6.02c-1.241-5.68-2.326-11.42-3.208-17.227,0.388-.121.784-0.224,1.174-0.341-0.728-3.934-1.423-7.929-2.061-11.916a202.16,202.16,0,0,1-37.779-8.875c-0.12,0-.238,0-0.358,0-99.8,0-180.7-80.962-180.7-180.833,0-3.992.143-7.949,0.4-11.876A137.7,137.7,0,0,0,85.31,383.663a397.491,397.491,0,0,1,76.976,90.656,163.9,163.9,0,0,1,58.29.9,169.424,169.424,0,0,1,5.266-34.184A192.911,192.911,0,0,1,78.907,326.669c-0.016-1.01-.038-2.017-0.038-3.03a191.5,191.5,0,0,1,10.1-61.571l0.176,0.073a180.9,180.9,0,0,1,49.865-76.834q2.64-3.721,5.381-7.365C188.558,99.781,272.335,47,368.463,47a256.349,256.349,0,0,1,96.7,18.824,465.06,465.06,0,0,0-146.086,62.962q3.687,4.165,7.206,8.482A198.27,198.27,0,0,1,489.287,148.5,389.843,389.843,0,0,0,316.5,201.919a385.486,385.486,0,0,1-121.7,65.693,75.453,75.453,0,0,1-22.568,36.78,566.442,566.442,0,0,1,113.541,92.376q12.416-5.276,25.127-9.975a51.435,51.435,0,0,0,97.041-23.814c0-.648-0.025-1.29-0.048-1.932a552.2,552.2,0,0,1,184.323.2c-0.019.575-.043,1.148-0.043,1.727a51.438,51.438,0,0,0,96.852,24.184q12.568,4.644,24.828,9.9a566.3,566.3,0,0,1,113.969-92.822,75.4,75.4,0,0,1-22.56-36.759A385.4,385.4,0,0,1,683.6,201.832a389.775,389.775,0,0,0-172.736-53.391A198.257,198.257,0,0,1,673.82,137.217q3.519-4.311,7.2-8.478A465,465,0,0,0,534.982,65.813,256.331,256.331,0,0,1,631.65,47c96.1,0,179.85,52.751,224,130.868q2.745,3.638,5.38,7.361a180.8,180.8,0,0,1,49.849,76.79l0.176-.073a191.33,191.33,0,0,1,10.1,61.536c0,1.012-.023,2.02-0.038,3.028A192.838,192.838,0,0,1,772.844,441.032a181.36,181.36,0,0,1,6.611,33.952,163.868,163.868,0,0,1,58.309-.907,397.285,397.285,0,0,1,76.952-90.605,137.655,137.655,0,0,0,80.213-52.709c0.255,3.925.4,7.88,0.4,11.869C995.327,442.447,914.451,523.363,814.685,523.363Z" transform="translate(-0.031 -9)"/>
+            </svg>
+
+            <!-- Home page button -->
+            <form onsubmit="loadingIcon(this);" action="/">
+                <button type="submit" onauxclick="openActionInNewTab(this)" class="btn btn-secondary rounded-pill mx-auto mx-lg-0 mt-2"
+                        id="nav-active">
+                    <svg class="btn-icon " width="28" height="28" data-jam="home">
+                        <use href="#home">
+                    </svg>
+                    <svg class="btn-icon home btn-icon-f" width="28" height="28" data-jam="home-f">
+                        <use href="#home-f">
+                    </svg>
+                    <svg class="btn-icon loading-icon d-none" width="28" height="28" data-jam="refresh">
+                        <use href="#refresh">
+                    </svg>
+                    <strong class="d-none d-lg-inline-block ml-2">Home</strong>
+                </button>
+            </form>
+
+            <!-- Wild West page button -->
+            <form onsubmit="loadingIcon(this);" action="/wild">
+                <button type="submit" onauxclick="openActionInNewTab(this)" class="btn btn-secondary rounded-pill mx-auto mx-lg-0 mt-2" id="nav-active">
+
+                    <svg class="btn-icon" width="28" height="28" data-jam="cactus">
+                        <use href="#cactus"></use>
+                    </svg>
+
+                    <svg class="btn-icon btn-icon-f" width="28" height="28" data-jam="cactus-f">
+                        <use href="#cactus-f"></use>
+                    </svg>
+
+                    <svg class="btn-icon loading-icon d-none" width="28" height="28" data-jam="refresh">
+                        <use href="#refresh"></use>
+                    </svg>
+                    <strong class="d-none d-lg-inline-block ml-2">
+                        Wild West
+                    </strong>
+                </button>
+            </form>
+
+            <!-- Notification page button -->
+            <form onsubmit="loadingIcon(this);" action="/notifications">
+                <button type="submit" onauxclick="openActionInNewTab(this)" class="btn btn-secondary rounded-pill mx-auto mx-lg-0 mt-2 position-relative" id="nav-active">
+
+                    <svg class="btn-icon" width="28" height="28" data-jam="bell">
+                        <use href="#bell"></use>
+                    </svg>
+
+                    <svg class="btn-icon btn-icon-f" width="28" height="28" data-jam="bell-f">
+                        <use href="#bell-f"></use>
+                    </svg>
+                    <!--          .user.UnreadNotificationCount-->
+                    <span class="notif-badge"></span>
+
+                    <svg class="btn-icon loading-icon d-none" width="28" height="28" data-jam="refresh">
+                        <use href="#refresh"></use>
+                    </svg>
+                    <strong class="d-none d-lg-inline-block ml-2">Notifications</strong>
+                </button>
+            </form>
+
+            <!-- Bookmark page button -->
+            <form onsubmit="loadingIcon(this);" action="/bookmarks">
+                <button type="submit" onauxclick="openActionInNewTab(this)" class="btn btn-secondary rounded-pill mx-auto mx-lg-0 mt-2 position-relative">
+
+                    <svg class="btn-icon" width="28" height="28" data-jam="bookmark">
+                        <use href="#bookmark"></use>
+                    </svg>
+
+                    <svg class="btn-icon btn-icon-f" width="28" height="28" data-jam="bookmark-f">
+                        <use href="#bookmark-f"></use>
+                    </svg>
+
+                    <svg class="btn-icon loading-icon d-none" width="28" height="28" data-jam="refresh">
+                        <use href="#refresh"></use>
+                    </svg>
+                    <strong class="d-none d-lg-inline-block ml-2">Bookmarks</strong>
+                </button>
+            </form>
+
+            <!-- Search page button -->
+            <form onsubmit="loadingIcon(this);" action="/search">
+                <button type="submit" onauxclick="openActionInNewTab(this)" class="btn btn-secondary rounded-pill mx-auto mx-lg-0 mt-2 position-relative" id="nav-active">
+
+                    <svg class="btn-icon" width="28" height="28" data-jam="search">
+                        <use href="#search"></use>
+                    </svg>
+
+                    <svg class="btn-icon btn-icon-f" width="28" height="28" data-jam="search">
+                        <use href="#search"></use>
+                    </svg>
+
+                    <svg class="btn-icon loading-icon d-none" width="28" height="28" data-jam="refresh">
+                        <use href="#refresh"></use>
+                    </svg>
+                    <strong class="d-none d-lg-inline-block ml-2">Search</strong>
+                </button>
+            </form>
+
+            <!-- User page button -->
+            <form onsubmit="loadingIcon(this);" action="/user/{{ .user.Display}}">
+                <button type="submit" onauxclick="openActionInNewTab(this)" class="btn btn-secondary rounded-pill mx-auto mx-lg-0 mt-2" id="nav-active">
+                    <div class="rounded-circle px28 profile-picture d-inline-block valign-middle"
+                         style="background-image: url('/public/img/crabber_header.svg');">
+                        <div class="d-none rounded-circle loading-icon loading-profile"></div>
+                    </div>
+                    <strong class="d-none d-lg-inline-block ml-2">Profile</strong>
+                </button>
+            </form>
+
+            <!-- Molt button -->
+            <button type="button" id="molt-btn" class="btn btn-primary mx-auto mx-lg-0 subtle-shadow rounded-pill w-md-75 mt-4" id="molt-btn" onclick="toggleModal('#compose_modal');">
+
+                <svg class="btn-icon d-lg-none" width="28" height="28" data-jam="write">
+                    <use href="#write"></use>
+                </svg>
+                <strong class="d-none d-lg-inline-block">Molt</strong>
+            </button>
+
+            <!-- Stats page button -->
+            <form onsubmit="loadingIcon(this);" action="/stats">
+                <button type="submit" onauxclick="openActionInNewTab(this)" class="btn btn-secondary rounded-pill mx-auto mx-lg-0 mt-2 extra-navs" id="nav-active">
+
+                    <svg class="btn-icon text-muted" width="28" height="28" data-jam="dashboard">
+                        <use href="#dashboard"></use>
+                    </svg>
+
+                    <svg class="btn-icon text-muted btn-icon-f" width="28" height="28" data-jam="dashboard-f">
+                        <use href="#dashboard-f"></use>
+                    </svg>
+
+                    <svg class="btn-icon loading-icon loading-icon-center d-none" width="28" height="28" data-jam="refresh">
+                        <use href="#refresh"></use>
+                    </svg>
+                    <strong class="d-none d-lg-inline-block ml-2">Stats</strong>
+                </button>
+            </form>
+
+            <!-- Settings page button -->
+            <form onsubmit="loadingIcon(this);" action="/user/{{ .user.Display }}/settings">
+                <button type="submit" onauxclick="openActionInNewTab(this)" class="btn btn-secondary rounded-pill mx-auto mx-lg-0 mt-2 extra-navs"
+                        id="nav-active">
+
+                    <svg class="btn-icon text-muted" width="28" height="28" data-jam="cog">
+                        <use href="#cog"></use>
+                    </svg>
+
+                    <svg class="btn-icon text-muted btn-icon-f" width="28" height="28" data-jam="cog-f">
+                        <use href="#cog-f"></use>
+                    </svg>
+
+                    <svg class="btn-icon loading-icon loading-icon-center d-none" width="28" height="28" data-jam="cog">
+                        <use href="#cog"></use>
+                    </svg>
+                    <strong class="d-none d-lg-inline-block ml-2">Settings</strong>
+                </button>
+            </form>
+
+            <!-- Logout button -->
+            <form class="no-ajax" onsubmit="return confirm('Are you sure you want to log out?')" action="/logout">
+                <button type="submit" class="btn btn-secondary rounded-pill mx-auto mx-lg-0 mt-2 extra-navs">
+
+                    <svg class="btn-icon text-muted" width="28" height="28" data-jam="log-out">
+                        <use href="#log-out"></use>
+                    </svg>
+                    <strong class="d-none d-lg-inline-block ml-2">
+                        Log out
+                    </strong>
+                </button>
+            </form>
+        </div>
+
+        <!-- Main Content -->
+        <div id="content-body" onscroll="updateScrollback();" class="h-100">
+
+        <div class="p-2 w-100 no-h-scroll">
+            <h2 class="mb-3">Bio</h2>
+            <form method="POST" enctype="multipart/form-data" class="p-2">
+                <input type="hidden" name="user_action" value="update_description" autofocus>
+                <input type="hidden" name="page" value="settings">
+                <input type="hidden" name="user_id" value="{{ .user.ID }}">
+
+                <!-- Display name -->
+                <div class="form-group cool-input">
+                    <label for="displayName">Display name</label>
+                    <input type="text" name="display_name" class="form-control" id="displayName" oninput="validateField(this, 'display_name', false)"
+                           placeholder="Bob 'Snake' Plissken" value="{{ .user.Display }}" required aria-required>
+                </div>
+
+                <!-- Description -->
+                <div class="form-group cool-input">
+                    <label for="description">About me</label>
+                    <textarea type="text" name="description" class="bg-dark form-control text-light" id="description" placeholder="I'm too tired, maybe later."
+                              required aria-required oninput="validateDescription()">{{ .user.Description }}</textarea>
+                </div>
+
+                <!-- Location -->
+                <div class="form-group cool-input">
+                    <label for="location">Location <span class="text-muted">(optional)</span></label>
+                    <input type="text" name="location" class="form-control" id="location" oninput="validateField(this, 'location', false)"
+                           placeholder="Planet Earth, The Solar System" value="">
+                </div>
+
+                <!-- Website -->
+                <div class="form-group cool-input">
+                    <label for="website">Website <span class="text-muted">(optional)</span></label>
+                    <input type="text" name="website" class="form-control" id="website" oninput="validateField(this, 'website', false)"
+                           placeholder="https://onlycrabs.com/bigred" value="{{ .user.Website }}">
+                </div>
+
+                <!-- Bio -->
+                <label>
+                    Fun facts
+                    <span class="text-muted">
+                (optional)
+            </span>
+                    <br>
+                    <small class="text-muted">
+                        Tell people about yourself!
+                    </small>
+                </label>
+                <div class="mb-2 input-group cool-input">
+                    <div class="input-group-prepend">
+                        <label class="input-group-text" for="bio.age">Age</label>
+                    </div>
+                    <input type="text" name="bio.age" id="bio.age" class="bg-dark form-control text-light" placeholder="e.g. 42" oninput="validateField(this, 'age', true)">
+                </div>
+                <div class="mb-2 input-group cool-input">
+                    <div class="input-group-prepend">
+                        <label class="input-group-text" for="bio.pronouns">Pronouns</label>
+                    </div>
+                    <input type="text" name="bio.pronouns" id="bio.pronouns" class="bg-dark form-control text-light" placeholder="e.g. they/them" oninput="validateField(this, 'pronouns', true)">
+                </div>
+                <div class="mb-2 input-group cool-input">
+                    <div class="input-group-prepend">
+                        <label class="input-group-text" for="bio.quote">Quote</label>
+                    </div>
+                    <input type="text" name="bio.quote" id="bio.quote" class="bg-dark form-control text-light" placeholder="e.g. The world is your lobster." oninput="validateField(this, 'quote', true)">
+                </div>
+                <div class="mb-2 input-group cool-input">
+                    <div class="input-group-prepend">
+                        <label class="input-group-text" for="bio.jam">My jam</label>
+                    </div>
+                    <input type="text" name="bio.jam" id="bio.jam" class="bg-dark form-control text-light" placeholder="e.g. Frank Sinatra - My Way" oninput="validateField(this, 'jam', true)">
+                </div>
+                <div class="mb-2 input-group cool-input">
+                    <div class="input-group-prepend">
+                        <label class="input-group-text" for="bio.obsession">Latest obsession</label>
+                    </div>
+                    <input type="text" name="bio.obsession" id="bio.obsession" class="bg-dark form-control text-light" placeholder="e.g. playing with my Tamagotchi" oninput="validateField(this, 'obsession', true)">
+                </div>
+                <div class="mb-2 input-group cool-input">
+                    <div class="input-group-prepend">
+                        <label class="input-group-text" for="bio.remember">Remember when</label>
+                    </div>
+                    <input type="text" name="bio.remember" id="bio.remember" class="bg-dark form-control text-light" placeholder="e.g. profile pictures were square?" oninput="validateField(this, 'remember', true)">
+                </div>
+                <div class="input-group cool-input">
+                    <div class="input-group-prepend">
+                        <label class="input-group-text" for="bio.emoji">Favorite emoji</label>
+                    </div>
+                    <input type="text" name="bio.emoji" id="bio.emoji" class="bg-dark form-control text-light" placeholder="e.g. 🌵 or ;)" oninput="validateField(this, 'emoji', true)">
+                </div>
+
+                <!-- Social links -->
+                <label class="mt-3">
+                    Social links
+                    <span class="text-muted">
+                (optional)
+            </span>
+                    <br>
+                    <small class="text-muted">
+                        Put your eggs in all the baskets!
+                    </small>
+                </label>
+                <div class="mb-2 input-group cool-input">
+                    <div class="input-group-prepend">
+                        <label class="input-group-text" for="bio.social-discord">Discord</label>
+                    </div>
+                    <input type="text" name="bio.social-discord" id="bio.social-discord" class="bg-dark form-control text-light" placeholder="username" oninput="validateField(this, 'social', true)"
+                           data-regex="">
+                </div>
+                <div class="mb-2 input-group cool-input">
+                    <div class="input-group-prepend">
+                        <label class="input-group-text" for="bio.social-github">GitHub</label>
+                    </div>
+                    <input type="text" name="bio.social-github" id="bio.social-github" class="bg-dark form-control text-light" placeholder="username" oninput="validateField(this, 'social', true)"
+                           data-regex="">
+                </div>
+                <div class="mb-2 input-group cool-input">
+                    <div class="input-group-prepend">
+                        <label class="input-group-text" for="bio.social-spacehey">SpaceHey</label>
+                    </div>
+                    <input type="text" name="bio.social-spacehey" id="bio.social-spacehey" class="bg-dark form-control text-light" placeholder="profile link" oninput="validateField(this, 'social', true)"
+                           data-regex="">
+                </div>
+                <div class="mb-2 input-group cool-input">
+                    <div class="input-group-prepend">
+                        <label class="input-group-text" for="bio.social-spotify">Spotify</label>
+                    </div>
+                    <input type="text" name="bio.social-spotify" id="bio.social-spotify" class="bg-dark form-control text-light" placeholder="profile link" oninput="validateField(this, 'social', true)"
+                           data-regex="">
+                </div>
+                <div class="mb-2 input-group cool-input">
+                    <div class="input-group-prepend">
+                        <label class="input-group-text" for="bio.social-twitch">Twitch</label>
+                    </div>
+                    <input type="text" name="bio.social-twitch" id="bio.social-twitch" class="bg-dark form-control text-light" placeholder="channel link" oninput="validateField(this, 'social', true)"
+                           data-regex="">
+                </div>
+                <div class="mb-2 input-group cool-input">
+                    <div class="input-group-prepend">
+                        <label class="input-group-text" for="bio.social-youtube">YouTube</label>
+                    </div>
+                    <input type="text" name="bio.social-youtube" id="bio.social-youtube" class="bg-dark form-control text-light" placeholder="channel link" oninput="validateField(this, 'social', true)"
+                           data-regex="">
+                </div>
+                <div class="mb-2 input-group cool-input">
+                    <div class="input-group-prepend">
+                        <label class="input-group-text" for="bio.social-steam">Steam</label>
+                    </div>
+                    <input type="text" name="bio.social-steam" id="bio.social-steam" class="bg-dark form-control text-light" placeholder="Steam ID" oninput="validateField(this, 'social', true)"
+                           data-regex="">
+                </div>
+                <div class="mb-2 input-group cool-input">
+                    <div class="input-group-prepend">
+                        <label class="input-group-text" for="bio.social-xbox">Xbox Live</label>
+                    </div>
+                    <input type="text" name="bio.social-xbox" id="bio.social-xbox" class="bg-dark form-control text-light" placeholder="gamertag" oninput="validateField(this, 'social', true)"
+                           data-regex="">
+                </div>
+                <div class="mb-2 input-group cool-input">
+                    <div class="input-group-prepend">
+                        <label class="input-group-text" for="bio.social-psn">PlayStation Network</label>
+                    </div>
+                    <input type="text" name="bio.social-psn" id="bio.social-psn" class="bg-dark form-control text-light" placeholder="PSN ID" oninput="validateField(this, 'social', true)"
+                           data-regex="">
+                </div>
+                <div class="mb-2 input-group cool-input">
+                    <div class="input-group-prepend">
+                        <label class="input-group-text" for="bio.social-nso">Nintendo Switch Online</label>
+                    </div>
+                    <input type="text" name="bio.social-nso" id="bio.social-nso" class="bg-dark form-control text-light" placeholder="friend code" oninput="validateField(this, 'social', true)"
+                           data-regex="">
+                </div>
+
+                <!-- Submit button -->
+                <button id="bio-save" class="btn btn-primary rounded-pill mt-3 float-right" type="submit"><strong>Save</strong></button>
+                <div class="clearfix"></div>
+            </form>
+
+            <!-- Section border -->
+            <hr class="border-dark mb-3 mt-4">
+
+            <h2 class="mb-3">Account</h2>
+            <form method="POST" class="p-2">
+                <input type="hidden" name="user_action" value="update_account">
+
+                <!-- Email address -->
+                <div class="form-group cool-input">
+                    <label for="exampleInputEmail1">Email address</label>
+                    <input type="email" name="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp"
+                           placeholder="Please enter an email address" value="{{ .user.Email }}" required aria-required>
+                </div>
+
+                <!-- Username -->
+                <div class="form-group cool-input">
+                    <label for="inlineFormInputGroup">Username</label>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <div class="input-group-text">@</div>
+                        </div>
+                        <input name="username" type="text" class="form-control" id="inlineFormInputGroup" placeholder="crablover2000"
+                               data-regex=""
+                               oninput="validateField(this, 'username', false)"
+                               value="{{ .user.Display }}" required aria-required>
+                    </div>
+                </div>
+
+                <!-- Submit button -->
+                <button class="btn btn-primary rounded-pill mt-3 float-right" type="submit"><strong>Save</strong></button>
+                <div class="clearfix"></div>
+            </form>
+
+            <form method="POST" class="p-2">
+                <input type="hidden" name="user_action" value="change_password">
+                <h3 class="mb-3">Change password</h3>
+
+                <!-- Old Pass -->
+                <div class="form-group cool-input">
+                    <label for="old-password">Current password</label>
+                    <input type="password" name="old-password" class="form-control" id="old-password" required aria-required>
+                </div>
+
+                <!-- New Pass -->
+                <div class="form-group cool-input">
+                    <label for="new-password">New password</label>
+                    <input type="password" name="new-password" class="form-control" id="new-password" autocomplete="new-password" required aria-required>
+                </div>
+
+                <!-- Confirm pass -->
+                <div class="form-group cool-input">
+                    <label for="confirm-new-password">Confirm new password</label>
+                    <input type="password" name="confirm-password" class="form-control" id="confirm-new-password" autocomplete="new-password" required aria-required>
+                </div>
+
+                <!-- Submit button -->
+                <button class="btn btn-primary rounded-pill mt-3 float-right" type="submit"><strong>Change Password</strong></button>
+                <div class="clearfix"></div>
+            </form>
+            
+
+
+            <!-- Section border -->
+            <hr class="border-dark mb-3 mt-4">
+
+            <h2 class="mb-3">Content Filtering</h2>
+            <form method="POST" class="p-2">
+                <input type="hidden" name="user_action" value="update_content_filters">
+                <!-- Muted Words -->
+                <div class="form-group cool-input">
+                    <label for="description">Muted words (comma separated)</label>
+                    <textarea type="text" name="muted_words"
+                              class="bg-dark form-control text-light" id="muted-words"
+                              placeholder="emacs, lua, twitter"
+                    ></textarea>
+                </div>
+
+                <!-- NSFW Toggle -->
+                <div class="form-group cool-input mb-2">
+                    <script>
+                        function confirmAge(elem) {
+                            if (elem.checked) {
+                                elem.checked = confirm('Are you 18 years or older?');
+                            }
+                            elem.value = elem.checked;
+                        }
+                    </script>
+                    <div class="custom-control custom-switch">
+                        <input onchange="return confirmAge(this)" type="checkbox" class="custom-control-input" id="toggle-nsfw-mode"
+                               name="nsfw_mode"
+                        value=""
+                        >
+                        <label class="custom-control-label" for="toggle-nsfw-mode">Display NSFW Content</label>
+                    </div>
+                </div>
+
+                <!-- Blocked users -->
+                <div class="mb-2">
+                    <a href="javascript:void(0);" class="text-muted" onclick="toggleModal('#blocked_modal');">
+                        Click here to see a list of users you've blocked.
+                    </a>
+                </div>
+
+                <!-- Submit button -->
+                <button class="btn btn-primary rounded-pill mt-3 float-right" type="submit">
+                    <strong>
+                        Save
+                    </strong>
+                </button>
+
+                <div class="clearfix"></div>
+            </form>
+
+            <!-- Section border -->
+            <hr class="border-dark mb-3 mt-4">
+
+            <!-- Section border -->
+            <hr class="border-dark mb-3 mt-4">
+
+            <h2 class="mb-3">Danger Zone</h2>
+            <form class="p-2">
+                <p>
+                    Looking to delete your account? You can
+                    <a href="/delete-account">
+                        do that here.
+                    </a>
+                </p>
+                <div class="clearfix"></div>
+            </form>
+
+            <!-- Section border -->
+            <hr class="border-dark mb-3 mt-4">
+
+            <h2 class="mb-3">
+        <span class="glitch-wrapper">
+            <span class="glitch" data-text="[REDACTED]">
+                [REDACTED] ZONE
+            </span>
+        </span>
+            </h2>
+            <form method="POST" class="p-2" onchange="updateStylePreferences(this);">
+                <input type="hidden" name="user_action" value="style_settings">
+
+                <p>Exercise EXTREME caution.<p>
+
+                <!-- Light Mode -->
+                <div class="form-group cool-input mb-2">
+                    <div class="custom-control custom-switch">
+                        <input type="checkbox" class="custom-control-input" id="toggle-light-mode"
+                               name="light_mode">
+                        <label class="custom-control-label" for="toggle-light-mode">Light Mode</label>
+                    </div>
+                </div>
+
+                <!-- Dyslexic Mode -->
+                <div class="form-group cool-input mb-2">
+                    <div class="custom-control custom-switch">
+                        <input type="checkbox" class="custom-control-input" id="toggle-dyslexic-mode"
+                               name="dyslexic_mode">
+                        <label class="custom-control-label" for="toggle-dyslexic-mode">Dyslexic Mode</label>
+                    </div>
+                </div>
+
+                <!-- Comic Sans Mode -->
+                <div class="form-group cool-input mb-2">
+                    <div class="custom-control custom-switch">
+                        <input type="checkbox" class="custom-control-input" id="toggle-comicsans-mode"
+                               name="comicsans_mode">
+                        <label class="custom-control-label" for="toggle-comicsans-mode">Comic Sans Mode</label>
+                    </div>
+                </div>
+            </form>
+
+
+            <!-- Spacer -->
+            <div class="d-inline-block w-100 py-5 my-5 text-muted text-molt text-center"></div>
+        </div>
+
+        <!-- Spacer -->
+        <div class="d-inline-block w-100 p-5 my-5 text-muted text-molt text-center"></div>
+
+        <!-- This is where dynamic toasts will show up -->
+        <div id="toaster-coaster">
+        </div>
+
+
+
+        <script async>
+            attachCharacterCounters();
+        </script>
+        <script>
+            // Stop autofocus
+            document.querySelector("input[name='lastfm']").blur();
+            document.body.scrollTop = 0; // For Safari
+            document.documentElement.scrollTop = 0; // For Chrome, Firefox, IE and Opera
+
+            var limits = 160;
+            limits = JSON.parse(limits);
+
+            function validateDescription() {
+                const input = $('#description');
+                const content = input.val();
+                if (content.length >= limits['description'])
+                    input.val(content.substring(0, limits['description']));
+            }
+        </script>
+        <!-- Ctrl-Enter form submit -->
+        <script>
+            var currentForm = null;
+            $(document).keypress(
+                function(event) {
+                    if (event.keyCode === 13 && event.ctrlKey) {
+                        if (currentForm) {
+                            event.preventDefault();
+                            if ($(currentForm).find('button[type=submit]').attr('disabled') == null) {
+                                currentForm.submit()
+                            }
+                        }
+                    }
+                }
+            );
+
+            $('.draft-modal').on('shown.bs.modal', function() {
+                $(this).find('textarea').focus();
+            });
+
+            // IT WAS THAT EASY THE WHOLE TIME???
+            const target = document.getElementById('content-body');
+            $('.master-container div.row.h-100').on('wheel', function(event) {
+                if (event.target.closest('#content-body') == null) {
+                    target.scrollTop += event.originalEvent.deltaY;
+                }
+            });
+        </script>
+    </div>
+    <!-- Additional Panel -->
+    <div class="d-none d-lg-block col-2 col-xl-3 ml-2 p-1 pt-2" id="add-panel">
+        {{ if .IsSelf }}
+        <!-- Search bar -->
+        <form action="/search/" method="GET">
+            <div class="rounded-pill search-box mini-compose-box px-3 p-2 d-flex flex-row">
+                <svg class="mr-2" width="28" height="28" data-jam="search">
+                    <use href="#search">
+                </svg>
+                <input class="w-100" type="text" name="q" placeholder="Search Crabber" required>
+            </div>
+        </form>
+        {{ end }}
+
+        {{ if .IsSelf }}
+        <!-- Who to follow -->
+        <div class="panel d-none d-xl-block" id="recommended-crabs">
+            <div class="panel-title">
+                            <span>
+                                Who to follow
+                            </span>
+            </div>
+
+            <div class="recommended-crab">
+                your dreams 
+            </div>
+            your dreams 
+        </div>
+        {{ end }}
+
+        {{ if .IsSelf }}
+        <!-- Trending Crabtags -->
+        <div class="panel" id="trending">
+            <div class="panel-title">
+          <span>
+            Trending
+          </span>
+            </div>
+
+            <p class="text-muted nothing">
+                Nothing right now.
+            </p>
+        </div>
+        {{ end }}
+
+
+        <!-- Copyright footer -->
+        <div id="nav-footer" class="text-muted-more d-none d-lg-block absolute-bottom mb-3">
+            <small class="mb-2 d-block"> since last server restart.</small>
+            <small>&copy; Copyright 2022, Lobsterer</small>
+            <br>
+            <small>
+                Crabber is open-source and non-profit.
+                <a href="https://github.com/toul-codes/lobsterer">Fork on GitHub</a>
+            </small>
+            <br>
+            <small>
+                <a href="/legal/TOS" target="_blank">Terms of Service</a>
+            </small>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
+
+

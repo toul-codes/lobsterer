@@ -252,6 +252,36 @@ func Profile(c *gin.Context) {
 	})
 }
 
+func Settings(c *gin.Context) {
+	// check db for username & id?
+	username := c.Params.ByName("username")
+	is := models.NewItemService(&models.DynamoConfig{
+		Region: "us-west-2",
+		Url:    "http://localhost:8000",
+		AKID:   "getGudKid",
+		SAC:    "eatMorCrabs",
+		ST:     "thisissuchasecret",
+		Source: "noneofthismattersitsalllocalyfake",
+	})
+	usr, err := models.ByName(username, is, models.TableName)
+	if err != nil {
+		log.Error("Error:", err)
+		c.HTML(http.StatusOK, "404.html", nil)
+		return
+	}
+
+	sessionStore := sessions.Default(c)
+	uid := sessionStore.Get(userKey)
+	//currentUser, _ := findUserByID(uid.(string))
+
+	//  have usr  data so can pass it to the user.html
+	c.HTML(http.StatusOK, "settings.html", gin.H{
+		"user":        usr,
+		"IsSelf":      uid == usr.ID,
+		"CurrentUser": usr,
+	})
+}
+
 // ChangeAvatar - removes a user from Lobsterer DB & Cognito
 func ChangeAvatar(c *gin.Context) {
 	sessionStore := sessions.Default(c)
