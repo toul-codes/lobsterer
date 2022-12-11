@@ -5,9 +5,12 @@
     <!-- Nav Panel -->
     {{ template "nav.html" . }}
 
+    <!-- Modals Panel -->
     {{ template "modals.html" . }}
+
     <!-- Main Content -->
-      <div class="border-dark border-bottom p-2" id="content-heading">
+    <div class="col col-lg-6 content border-dark border-left border-right p-0" id="main-panel">
+      <div class="border-dark border-bottom-2" id="content-heading">
         <h6 class="m-1 absolute-container">
           <strong>{{ .user.Display }}<br>
             <small class="text-muted">{{ .user.MoltCount }} Molt {{.user.MoltCount }}</small>
@@ -20,49 +23,35 @@
         </h6>
       </div>
       <div id="content-body" onscroll="updateScrollback();" class="h-100">
-
         <!-- Profile bio box -->
         <div class="profile-box border-bottom border-dark">
           <div class="profile-box-banner">
-          {{ if .IsSelf }}
-          <div class="banner-edit-button clickable w-100 h-100 absolute-top" onclick="toggleModal('#banner_modal');">
-            <svg class="text-light" width="46" height="46" data-jam="camera-f">
-              <use href="#camera-f"></use>
-            </svg>
+            {{ if .IsSelf }}
+            <div class="banner-edit-button clickable w-100 h-100 absolute-top" onclick="toggleModal('#banner_modal');">
+              <svg class="text-light" width="46" height="46" data-jam="camera-f">
+                <use href="#camera-f"></use>
+              </svg>
+            </div>
+            {{ end }}
+            <img class="profile-banner" src="https://lobsterer-avatars.s3.us-west-2.amazonaws.com/{{ .user.Banner }}" />
           </div>
-          {{ end }}
-          <img class="profile-banner" src="https://lobsterer-avatars.s3.us-west-2.amazonaws.com/{{ .user.Banner }}" />
-        </div>
-        <div class="profile-box-bio px-2 pt-2">
-          <div class="profile-box-avatar d-block w-25 force-square profile-box-shadow rounded-circle ">
-          {{ if .IsSelf }}
-          <div class="avatar-edit-button clickable w-100 h-100 zindex-front" onclick="toggleModal('#avatar_modal');">
-
-            <svg class="text-light" width="46" height="46" data-jam="camera-f">
-              <use href="#camera-f"></use>
-            </svg>
-          </div>
-          {{ end }}
-          <div class="rounded-circle profile-picture shadow-expand">
-            <img src="https://lobsterer-avatars.s3.us-west-2.amazonaws.com/{{ .user.Avatar }}"
-                 style="border-radius: 100%;">
-          </div>
-        </div>
-        <div class="profile-box-follow-row d-flex flex-row justify-content-end">
-          <!-- Display correct follow button if page is not current user -->
-          {{ if not .IsSelf }}
-          <button type="submit" class="btn btn-primary rounded-pill" onclick="location.href='/login'">
-            <button name="user_action" value="follow" type="submit" class="btn btn-outline-primary rounded-pill follow-btn">
-              <strong>
-                Follow
-              </strong>
-            </button>
-          </button>
-          {{ else }}
-          <form method="POST">
-            <input type="hidden" name="target_user" value="{{ .user.ID }}">
-            <!-- Follow/Unfollow button -->
-            <div class="d-inline-block ml-1 follow-section">
+          <div class="profile-box-bio px-2 pt-2">
+            <div class="profile-box-avatar d-block w-25 force-square profile-box-shadow rounded-circle ">
+              {{ if .IsSelf }}
+              <div class="avatar-edit-button clickable w-100 h-100 zindex-front" onclick="toggleModal('#avatar_modal');">
+                <svg class="text-light" width="46" height="46" data-jam="camera-f">
+                  <use href="#camera-f"></use>
+                </svg>
+              </div>
+              {{ end }}
+              <div class="rounded-circle profile-picture shadow-expand">
+                <img src="https://lobsterer-avatars.s3.us-west-2.amazonaws.com/{{ .user.Avatar }}"
+                     style="border-radius: 100%;">
+              </div>
+            </div>
+            <div class="profile-box-follow-row d-flex flex-row justify-content-end">
+              <!-- Display correct follow button if page is not current user -->
+              {{ if not .IsSelf }}
               <button name="user_action" value="follow" type="submit" class="btn btn-outline-primary rounded-pill follow-btn">
                 <strong>
                   Follow
@@ -70,359 +59,361 @@
               </button>
               <button name="user_action" value="unfollow" type="submit" class="btn btn-primary rounded-pill unfollow-btn">
                 <strong class="defalt-text">Unfollow</strong>
-                {{ end }}
               </button>
+              {{ end }}
+              <form method="POST" onsubmit="return savedescription()">
+                <!-- Fixed values -->
+                <input type="hidden" name="user_action" value="update_description">
+                <input type="hidden" name="user_id" value="{{ .user.ID }}">
+                <!-- Dynamic values -->
+                <input type="hidden" name="display_name" value="">
+                <input type="hidden" name="description" value="">
+                <button type="submit" id="save-button" class="btn btn-primary rounded-pill hidden"><strong>Save changes</strong></button>
+              </form>
             </div>
-          </form>
-          <form method="POST" onsubmit="return savedescription()">
-            <!-- Fixed values -->
-            <input type="hidden" name="user_action" value="update_description">
-            <input type="hidden" name="user_id" value="{{ .user.ID }}">
-            <!-- Dynamic values -->
-            <input type="hidden" name="display_name" value="">
-            <input type="hidden" name="description" value="">
-            <button type="submit" id="save-button" class="btn btn-primary rounded-pill hidden"><strong>Save changes</strong></button>
-          </form>
-        </div>
-        <div class="profile-box-names mt-2 mt-md-4 mt-lg-2">
-          <strong class="profile-box-display-name"
-          onkeypress="return (this.innerText.length <= 32)" contentEditable
-          onclick="showEditor('name')">
-          {{ .user.Display }}</strong>
-          {{ if .user.Verified }}
-            <a title="This user is verified"></a>
-          {{ end }}
-          <p class="text-muted mb-1">@{{ .user.Display }}
-            <small class="follows-you">
-              Follows you
-            </small>
-          </p>
-        </div>
-        <div class="profile-box-description w-100">
-          <div id="rich-description" class="editable-description" onclick="showEditor('description');">
-          {{ .user.Description }}
-        </div>
-        {{ if .isSelf }}
-        <div class="hidden" id="editable-description">
-          <textarea id="description-editor" rows=3 maxlength=160>{{ .user.Description}}</textarea>
-        </div>
-        {{ end }}
-      </div>
-      <div class="profile-box-join-date text-muted mt-1">
-        <!-- Website -->
-        {{ if .user.Website }}
-        <div class="d-inline-block mr-2" id="user-website">
-
-          <svg class="mini-molt-action-icon pb-1" width="16" height="20" data-jam="map-marker">
-            <use href="#link"></use>
-          </svg>
-          <a class="text-primary" href="{{ .user.Website }}" target="_blank" rel="nofollow">{{ .user.Website }}</a>
-        </div>
-        {{ end }}
-
-        <!-- Crabber Birthday -->
-        <div class="d-inline-block mr-2" id="join-date">
-          <svg class="mini-molt-action-icon pb-1" width="16" height="20" data-jam="calendar">
-            <use href="#calendar"></use>
-          </svg>
-          Joined {{ .user.Created }}
-        </div>
-      </div>
-      <div class="profile-box-following mt-1">
-        <a class="text-inherit" href="/user/{{.user.Display}}/following">
-          <div class="d-inline mr-2"><strong>{{.user.FollowingCount}}</strong>
-            <span class="text-muted">Following</span></div></a>
-        <a class="text-inherit" href="/user/{{.user.Display}}/followers">
-          <div class="d-inline mr-2"><strong>{{.user.FollowerCount}}</strong>
-            <span class="text-muted">Follower{{.user.FollowerCount }}</span></a></div>
-
-      <!-- "Followers you know" section -->
-      {{ if .IsSelf }}
-      {{ if not .IsSelf }}
-      <div class="following-mutuals text-muted mt-2">
-        <a class="text-muted" href="/user/{{.user.Display}}/followers_you_know">
-          <div class="featured-mutuals mr-2">
-            <div class="featured-mutual-avatar"
-                 src="{{.user.Avatar}}">
+            <div class="profile-box-names mt-2 mt-md-4 mt-lg-2">
+              {{ if .IsSelf }}
+              <strong class="profile-box-display-name"
+                      onkeypress="return (this.innerText.length <= 32)" contentEditable
+                      onclick="showEditor('name')">
+                {{ .user.Display }}</strong>
+              {{ end }}
+              {{ if not .IsSelf }}
+              <strong class="profile-box-display-name">
+                {{ .user.Display }}</strong>
+              {{ end }}
+              {{ if .user.Verified }}
+              <a title="This user is verified"></a>
+              {{ end }}
+              <p class="text-muted mb-1">@{{ .user.Display}}
+                <small class="follows-you">
+                  Follows you
+                </small>
+              </p>
             </div>
-          </div>
-          <span>Followed by</span>
-          <span><span>
+            <div class="profile-box-description w-100">
+                <div id="rich-description" class="editable-description" onclick="showEditor('description');">
+                  {{ .user.Description }}
+                </div>
+              {{ if .isSelf }}
+              <div class="hidden" id="editable-description">
+                <textarea id="description-editor" rows=3 maxlength=160>{{ .user.Description}}</textarea>
+              </div>
+              {{ end }}
+            </div>
+            <div class="profile-box-join-date text-muted mt-1">
+              <!-- Website -->
+              {{ if .user.Website }}
+              <div class="d-inline-block mr-2" id="user-website">
+
+                <svg class="mini-molt-action-icon pb-1" width="16" height="20" data-jam="map-marker">
+                  <use href="#link"></use>
+                </svg>
+                <a class="text-primary" href="{{ .user.Website }}" target="_blank" rel="nofollow">{{ .user.Website }}</a>
+              </div>
+              {{ end }}
+
+              <!-- Crabber Birthday -->
+              <div class="d-inline-block mr-2" id="join-date">
+                <svg class="mini-molt-action-icon pb-1" width="16" height="20" data-jam="calendar">
+                  <use href="#calendar"></use>
+                </svg>
+                Joined {{ .user.Created }}
+              </div>
+            </div>
+            <div class="profile-box-following mt-1">
+              <a class="text-inherit" href="/user/{{.user.Display}}/following">
+                <div class="d-inline mr-2"><strong>{{.user.FollowingCount}}</strong>
+                  <span class="text-muted">Following</span></div></a>
+              <a class="text-inherit" href="/user/{{.user.Display}}/followers">
+                <div class="d-inline mr-2"><strong>{{.user.FollowerCount}}</strong>
+                  <span class="text-muted">Follower{{.user.FollowerCount }}</span></a></div>
+
+            <!-- "Followers you know" section -->
+            {{ if .IsSelf }}
+            {{ if not .IsSelf }}
+            <div class="following-mutuals text-muted mt-2">
+              <a class="text-muted" href="/user/{{.user.Display}}/followers_you_know">
+                <div class="featured-mutuals mr-2">
+                  <div class="featured-mutual-avatar"
+                       src="{{.user.Avatar}}">
+                  </div>
+                </div>
+                <span>Followed by</span>
+                <span><span>
             <span>
               and other you follow.
             </span>
 
-        </a>
-      </div>
-      {{ end }}
-      {{ end }}
-    </div>
+              </a>
+            </div>
+            {{ end }}
+            {{ end }}
+          </div>
 
-    <!-- SHELL Section -->
-    <div class="shell p-1 mt-1 mb-0 jumbotron" id="shell-dropdown">
-      <!-- Shell toggle -->
-      <button id="shell-toggle" class="btn btn-trans pl-0 w-100 text-left">
+          <!-- SHELL Section -->
+          <div class="shell p-1 mt-1 mb-0 jumbotron" id="shell-dropdown">
+            <!-- Shell toggle -->
+            <button id="shell-toggle" class="btn btn-trans pl-0 w-100 text-left">
 
-        <svg class="shell-toggle-chevron" width="24" height="24" data-jam="chevron-right">
-          <use href="#chevron-right"></use>
-        </svg>
-        Full bio
-      </button>
-
-      <div id="shell-contents" class="shell-collapsed text-light-darker cool-scroll">
-
-        <h5>Fun facts</h5>
-        <div class="rounded neue-card p-3 bio-fields">
-          <table id="user-info">
-            <tr>
-              <th></th>
-              <td class="bio-field-value">
-              </td>
-            </tr>
-            <p class="text-muted">This user hasn't filled out their bio 😦</p>
-          </table>
-        </div>
-
-        <h5 class="mt-3">Social links</h5>
-        <div class="rounded neue-card p-3 bio-fields">
-          <table id="user-social-links">
-            <tr>
-              <th></th>
-              <td class="bio-field-value">
-              </td>
-            </tr>
-          </table>
-        </div>
-
-        <h5 class="mt-3">Stats</h5>
-        <div class="rounded neue-card p-3">
-          <ul class="shell-stats pl-2 m-0">
-            <!-- Member duration -->
-            <li>Member for <strong class="text-primary"></strong> days</li>
-            <!-- Molts published -->
-            <li><strong class="text-primary">{{ .user.MoltCount }}</strong> Molt{{ .user.MoltCount }} published</li>
-            <!-- Molts liked -->
-            <li>Liked <strong class="text-primary">{{ .user.LikeCount }}</strong> Molt {{ .user.LikeCount }}</li>
-            <li><strong class="d-inline-block text-primary">
-              {{ if gt .user.FollowingCount 0 }}
-               <p>Hi</p>
-              {{ else }}
-
-              <svg class="" width="16" height="16" data-jam="infinite">
-                <use href="#infinite"></use>
+              <svg class="shell-toggle-chevron" width="24" height="24" data-jam="chevron-right">
+                <use href="#chevron-right"></use>
               </svg>
-              {{ end }}
-            </strong> follower/following ratio</li>
-          </ul>
+              Full bio
+            </button>
+
+            <div id="shell-contents" class="shell-collapsed text-light-darker cool-scroll">
+
+              <h5>Fun facts</h5>
+              <div class="rounded neue-card p-3 bio-fields">
+                <table id="user-info">
+                  <tr>
+                    <th></th>
+                    <td class="bio-field-value">
+                    </td>
+                  </tr>
+                  <p class="text-muted">This user hasn't filled out their bio 😦</p>
+                </table>
+              </div>
+
+              <h5 class="mt-3">Social links</h5>
+              <div class="rounded neue-card p-3 bio-fields">
+                <table id="user-social-links">
+                  <tr>
+                    <th></th>
+                    <td class="bio-field-value">
+                    </td>
+                  </tr>
+                </table>
+              </div>
+
+              <h5 class="mt-3">Stats</h5>
+              <div class="rounded neue-card p-3">
+                <ul class="shell-stats pl-2 m-0">
+                  <!-- Member duration -->
+                  <li>Member for <strong class="text-primary"></strong> days</li>
+                  <!-- Molts published -->
+                  <li><strong class="text-primary">{{ .user.MoltCount }}</strong> Molt{{ .user.MoltCount }} published</li>
+                  <!-- Molts liked -->
+                  <li>Liked <strong class="text-primary">{{ .user.LikeCount }}</strong> Molt {{ .user.LikeCount }}</li>
+                  <li><strong class="d-inline-block text-primary">
+                    {{ if gt .user.FollowingCount 0 }}
+                    <p>Hi</p>
+                    {{ else }}
+
+                    <svg class="" width="16" height="16" data-jam="infinite">
+                      <use href="#infinite"></use>
+                    </svg>
+                    {{ end }}
+                  </strong> follower/following ratio</li>
+                </ul>
+              </div>
+
+              <!-- Spacer -->
+              <div class="d-inline-block w-100 my-1 text-muted text-molt text-center"></div>
+
+            </div>
+
+            <script async>
+              var shellContents = $("#shell-contents");
+              $("#shell-toggle").click(function () {
+                shellContents.toggleClass("shell-collapsed");
+                $(".shell-toggle-chevron").toggleClass("rotate-90");
+              })
+            </script>
+          </div>
+
+          <!-- Tab switcher -->
+          <div class="row mx-0">
+            <div id="molts-btn" class="profile-box-category mt-2 col" onclick="switchTo('molts');">
+              <div class="py-2"><strong class="d-inline-block w-100 text-center">Molts</strong></div>
+            </div>
+            <div id="replies-btn" class="profile-box-category mt-2 col" onclick="switchTo('replies');">
+              <div class="py-2"><strong class="d-inline-block w-100 text-center">Replies</strong></div>
+            </div>
+            <div id="likes-btn" class="profile-box-category mt-2 col" onclick="switchTo('likes');">
+              <div class="py-2"><strong class="d-inline-block w-100 text-center">Likes</strong></div>
+            </div>
+          </div>
         </div>
+      </div>
+      <!-- All molts live here! -->
+      <div id="molts" class="">
+        <p> molts are here </p>
+      </div>
 
-        <!-- Spacer -->
-        <div class="d-inline-block w-100 my-1 text-muted text-molt text-center"></div>
+      <!-- All replies live here! -->
+      <div id="replies" class="">
+        <p> replies are here </p>
+      </div>
 
+      <!-- All likes live here! -->
+      <div id="likes" class="">
+        <p> likes are here </p>
+      </div>
+
+      <!-- Spacer -->
+      <div class="d-inline-block w-100 p-5 my-5 text-muted text-molt text-center"></div>
+
+      <!-- Avatar change popup -->
+      <div class="modal fade" id="avatar_modal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content bg-dark">
+            <div class="modal-header py-2 border-dark">
+              <button type="button" class="close text-primary" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+              <strong>Upload new avatar</strong>
+            </div>
+            <div class="modal-body">
+              <p class="text-muted">Recommended size: 500x500</p>
+              <!-- Avatar upload form -->
+              <form id="uploadForm" action="/user/avatar" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="user_action" value="change_avatar">
+                <div class="mb-2 input-group cool-input">
+                  <div class="input-group-prepend">
+                    <label class="input-group-text" for="avatar-description">Alt Text</label>
+                  </div>
+                  <input type="text" name="img_description"
+                         class="form-control" id="avatar-description"
+                         placeholder="image description (optional)"
+                         autocomplete="off">
+                </div>
+                <div class="d-flex flex-row justify-content-between">
+                  <div class="d-inline-block profile-file-select">
+                    <input id="upload" type="file" name="photofile" class="text-muted file-input" onchange="form.submit()" accept="image/x-png,image/jpeg, image/png" required>
+                  </div>
+                  <div class="d-inline-block">
+                    <button type="submit" onclick="$(this).children().text('Posting..')" class="btn btn-primary rounded-pill mini-btn"><strong>Upload</strong></button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Banner change popup -->
+      <div class="modal fade" id="banner_modal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+          <div class="modal-content bg-dark">
+            <div class="modal-header py-2 border-dark">
+              <button type="button" class="close text-primary" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+              <strong>Upload new banner</strong>
+            </div>
+            <div class="modal-body">
+              <p class="text-muted">Recommended size: 1500x500</p>
+              <!-- Banner upload form -->
+              <form id="uploadForm" action="/user/banner" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="user_action" value="change_banner">
+                <div class="mb-2 input-group cool-input">
+                  <div class="input-group-prepend">
+                    <label class="input-group-text" for="avatar-description">Alt Text</label>
+                  </div>
+                  <input type="text" name="img_description"
+                         class="form-control" id="avatar-description"
+                         placeholder="image description (optional)"
+                         autocomplete="off">
+                </div>
+                <div class="d-flex flex-row justify-content-between">
+                  <div class="d-inline-block profile-file-select">
+                    <input id="bannerupload" type="file" name="bannerfile" class="text-muted file-input" onchange="form.submit()" accept="image/x-png,image/jpeg, image/png" required>
+                  </div>
+                  <div class="d-inline-block">
+                    <button type="submit" onclick="$(this).children().text('Posting..')" class="btn btn-primary rounded-pill mini-btn"><strong>Upload</strong></button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
       </div>
 
       <script async>
-        var shellContents = $("#shell-contents");
-        $("#shell-toggle").click(function () {
-          shellContents.toggleClass("shell-collapsed");
-          $(".shell-toggle-chevron").toggleClass("rotate-90");
-        })
+        // Molt/Like tab controller
+        function switchTo(tab) {
+          var tabs = ['molts', 'replies', 'likes', 'trophies']
+          // Reset all buttons to inactive and tabs to hidden
+          tabs.forEach(tabName => {
+            $(`#${tabName}-btn`).removeClass("active");
+            $(`#${tabName}`).addClass("d-none");
+
+          });
+
+          // Switch active button
+          $(`#${tab}-btn`).addClass("active");
+          // Switch tab
+          $(`#${tab}`).removeClass("d-none");
+          // Load content if necessary
+          let loadStatus = $(`#${tab} meta[name=${tab}-load-status]`).attr('content');
+          if (loadStatus == 'false') {
+            let loadFunc = $(`#${tab} meta[name=${tab}-load-func]`).attr('content');
+            window[loadFunc]();
+          }
+
+          // Update tab parameter in location/history
+          let newLocation = new URL(window.location);
+          newLocation.searchParams.set('tab', tab);
+          window.history.pushState({}, '', newLocation.href);
+        }
+
+        function showEditor(focus) {
+          $('strong.profile-box-display-name').addClass('active');
+          $('div#rich-description.editable-description').addClass('hidden');
+          $('div#editable-description').removeClass('hidden');
+          $('#save-button').removeClass('hidden');
+
+          if (focus != undefined) {
+            if (focus == 'description') {
+              let descriptionEditor = document.getElementById('description-editor');
+              descriptionEditor.focus();
+              descriptionEditor.setSelectionRange(
+                      descriptionEditor.value.length,
+                      descriptionEditor.value.length
+              );
+            }
+            else if (focus == 'name') {
+              let nameEditor = $('.profile-box-display-name')[0];
+              nameEditor.focus();
+            }
+          }
+        }
+
+        function savedescription() {
+          let displayName = $('.profile-box-display-name')[0].innerText.trim();
+          let description = document.getElementById('description-editor').value.trim();
+
+          // Verify lengths
+          if (displayName.length < 1) {
+            alert('Display name cannot be empty.')
+            return false;
+          }
+          if (description.length < 1) {
+            alert('Description cannot be empty.')
+            return false;
+          }
+
+          // Commit values to hidden inputs
+          $('[name="display_name"]').val(displayName)
+          $('[name="description"]').val(description)
+
+          // Submit form
+          return true;
+        }
       </script>
-    </div>
 
-    <!-- Tab switcher -->
-    <div class="row mx-0">
-      <div id="molts-btn" class="profile-box-category mt-2 col" onclick="switchTo('molts');">
-        <div class="py-2"><strong class="d-inline-block w-100 text-center">Molts</strong></div>
-      </div>
-      <div id="replies-btn" class="profile-box-category mt-2 col" onclick="switchTo('replies');">
-        <div class="py-2"><strong class="d-inline-block w-100 text-center">Replies</strong></div>
-      </div>
-      <div id="likes-btn" class="profile-box-category mt-2 col" onclick="switchTo('likes');">
-        <div class="py-2"><strong class="d-inline-block w-100 text-center">Likes</strong></div>
-      </div>
     </div>
   </div>
-
+  <!-- Additional Panel -->
+  {{ template "search.html" . }}
 </div>
-
-<!-- All molts live here! -->
-<div id="molts" class="molts">
-  <p>All molts should live here</p>
-</div>
-
-<!-- All replies live here! -->
-<div id="replies" class="replies">
-  <p>All replies will live here at some point</p>
-</div>
-
-<!-- All likes live here! -->
-<div id="likes" class="likes">
-  <p>All your likes will live here</p>
-</div>
-
-
-<!-- Spacer -->
-<div class="d-inline-block w-100 p-5 my-5 text-muted text-molt text-center"></div>
-
-<!-- Avatar change popup -->
-<div class="modal fade" id="avatar_modal" tabindex="-1" role="dialog" aria-hidden="true">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content bg-dark">
-      <div class="modal-header py-2 border-dark">
-        <button type="button" class="close text-primary" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-        <strong>Upload new avatar</strong>
-      </div>
-      <div class="modal-body">
-        <p class="text-muted">Recommended size: 500x500</p>
-        <!-- Avatar upload form -->
-        <form id="uploadForm" action="/user/avatar" method="POST" enctype="multipart/form-data">
-          <input type="hidden" name="user_action" value="change_avatar">
-          <div class="mb-2 input-group cool-input">
-            <div class="input-group-prepend">
-              <label class="input-group-text" for="avatar-description">Alt Text</label>
-            </div>
-            <input type="text" name="img_description"
-                   class="form-control" id="avatar-description"
-                   placeholder="image description (optional)"
-                   autocomplete="off">
-          </div>
-          <div class="d-flex flex-row justify-content-between">
-            <div class="d-inline-block profile-file-select">
-              <input id="upload" type="file" name="photofile" class="text-muted file-input" onchange="form.submit()" accept="image/x-png,image/jpeg, image/png" required>
-            </div>
-            <div class="d-inline-block">
-              <button type="submit" onclick="$(this).children().text('Posting..')" class="btn btn-primary rounded-pill mini-btn"><strong>Upload</strong></button>
-            </div>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Banner change popup -->
-<div class="modal fade" id="banner_modal" tabindex="-1" role="dialog" aria-hidden="true">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content bg-dark">
-      <div class="modal-header py-2 border-dark">
-        <button type="button" class="close text-primary" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-        <strong>Upload new banner</strong>
-      </div>
-      <div class="modal-body">
-        <p class="text-muted">Recommended size: 1500x500</p>
-        <!-- Banner upload form -->
-        <form id="uploadForm" action="/user/banner" method="POST" enctype="multipart/form-data">
-          <input type="hidden" name="user_action" value="change_banner">
-          <div class="mb-2 input-group cool-input">
-            <div class="input-group-prepend">
-              <label class="input-group-text" for="avatar-description">Alt Text</label>
-            </div>
-            <input type="text" name="img_description"
-                   class="form-control" id="avatar-description"
-                   placeholder="image description (optional)"
-                   autocomplete="off">
-          </div>
-          <div class="d-flex flex-row justify-content-between">
-            <div class="d-inline-block profile-file-select">
-              <input id="bannerupload" type="file" name="bannerfile" class="text-muted file-input" onchange="form.submit()" accept="image/x-png,image/jpeg, image/png" required>
-            </div>
-            <div class="d-inline-block">
-              <button type="submit" onclick="$(this).children().text('Posting..')" class="btn btn-primary rounded-pill mini-btn"><strong>Upload</strong></button>
-            </div>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-</div>
-
-
-<script async>
-  // Molt/Like tab controller
-  function switchTo(tab) {
-    var tabs = ['molts', 'replies', 'likes', 'trophies']
-    // Reset all buttons to inactive and tabs to hidden
-    tabs.forEach(tabName => {
-      $(`#${tabName}-btn`).removeClass("active");
-      $(`#${tabName}`).addClass("d-none");
-
-    });
-
-    // Switch active button
-    $(`#${tab}-btn`).addClass("active");
-    // Switch tab
-    $(`#${tab}`).removeClass("d-none");
-    // Load content if necessary
-    let loadStatus = $(`#${tab} meta[name=${tab}-load-status]`).attr('content');
-    if (loadStatus == 'false') {
-      let loadFunc = $(`#${tab} meta[name=${tab}-load-func]`).attr('content');
-      window[loadFunc]();
-    }
-
-    // Update tab parameter in location/history
-    let newLocation = new URL(window.location);
-    newLocation.searchParams.set('tab', tab);
-    window.history.pushState({}, '', newLocation.href);
-  }
-
-  function showEditor(focus) {
-    $('strong.profile-box-display-name').addClass('active');
-    $('div#rich-description.editable-description').addClass('hidden');
-    $('div#editable-description').removeClass('hidden');
-    $('#save-button').removeClass('hidden');
-
-    if (focus != undefined) {
-      if (focus == 'description') {
-        let descriptionEditor = document.getElementById('description-editor');
-        descriptionEditor.focus();
-        descriptionEditor.setSelectionRange(
-                descriptionEditor.value.length,
-                descriptionEditor.value.length
-        );
-      }
-      else if (focus == 'name') {
-        let nameEditor = $('.profile-box-display-name')[0];
-        nameEditor.focus();
-      }
-    }
-  }
-
-  function savedescription() {
-    let displayName = $('.profile-box-display-name')[0].innerText.trim();
-    let description = document.getElementById('description-editor').value.trim();
-
-    // Verify lengths
-    if (displayName.length < 1) {
-      alert('Display name cannot be empty.')
-      return false;
-    }
-    if (description.length < 1) {
-      alert('Description cannot be empty.')
-      return false;
-    }
-
-    // Commit values to hidden inputs
-    $('[name="display_name"]').val(displayName)
-    $('[name="description"]').val(description)
-
-    // Submit form
-    return true;
-  }
-</script>
-
 
 <!-- This is where dynamic toasts will show up -->
-<div id="toaster-coaster">
-</div>
-
+<div id="toaster-coaster"></div>
 
 <!-- Bootstrap JS -->
-
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
         integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
         crossorigin="anonymous"></script>
@@ -459,10 +450,6 @@
     }
   });
 </script>
-  </div>
-  <!-- Additional Panel -->
-  {{ template "search.html" . }}
-</div>
 </body>
 </html>
 

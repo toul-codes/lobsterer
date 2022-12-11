@@ -273,13 +273,36 @@ func Settings(c *gin.Context) {
 	sessionStore := sessions.Default(c)
 	uid := sessionStore.Get(userKey)
 	//currentUser, _ := findUserByID(uid.(string))
-
+	session := sessions.Default(c)
+	session.Save()
 	//  have usr  data so can pass it to the user.html
 	c.HTML(http.StatusOK, "settings.html", gin.H{
 		"user":        usr,
 		"IsSelf":      uid == usr.ID,
 		"CurrentUser": usr,
 	})
+
+}
+
+// UpdateSettings - changes users profile information
+func UpdateSettings(c *gin.Context) {
+	sessionStore := sessions.Default(c)
+	uid := fmt.Sprintf("%s", sessionStore.Get(userKey))
+	description := c.PostForm("description")
+	website := c.PostForm("website")
+	display := c.PostForm("display_name")
+	fmt.Sprintf("desc %s, webs %s, dis %s", description, website, display)
+	svc := models.LocalService()
+	u, _ := models.ByID(uid, svc, models.TableName)
+	fmt.Printf("\nUSER: +v", u)
+	err := u.UpdateSettings(svc, models.TableName, description, website, display)
+	if err != nil {
+		c.String(http.StatusBadRequest, fmt.Sprintf("Update settings failed photo err: %s", err.Error()))
+		fmt.Print("err", err)
+	}
+	// refresh page
+
+	c.Redirect(http.StatusFound, fmt.Sprintf("/user/%s", u.Display))
 }
 
 // ChangeAvatar - adds avatar url to users profile
@@ -341,7 +364,7 @@ func ChangeAvatar(c *gin.Context) {
 		fmt.Print("err", err)
 	}
 	// refresh page
-	c.Redirect(http.StatusFound, "/user/taco")
+	c.Redirect(http.StatusFound, fmt.Sprintf("/user/%s", u.Display))
 }
 
 // ChangeBanner - adds banner url to the users profile
@@ -403,7 +426,7 @@ func ChangeBanner(c *gin.Context) {
 		fmt.Print("err", err)
 	}
 	// refresh page
-	c.Redirect(http.StatusFound, "/user/taco")
+	c.Redirect(http.StatusFound, fmt.Sprintf("/user/%s", u.Display))
 }
 
 func findUserByID(id string) (*user, error) {

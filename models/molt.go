@@ -7,6 +7,7 @@ type Molt struct {
 	Created      string `dynamodbav:"created"`
 	Author       string `dynamodbav:"author"`
 	Content      string `dynamodbav:"content"`
+	Url          string `dynamodbav:"url"`
 	Deleted      bool   `dynamodbav:"deleted"`
 	LikeCount    int    `dynamodbav:"like_count"`
 	RemoltCount  int    `dynamodbav:"remolt_count"`
