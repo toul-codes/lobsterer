@@ -145,8 +145,8 @@
     </form>
 
     <!-- Settings page button -->
-    <form onsubmit="loadingIcon(this);" action="/user/{{ .user.Display }}/settings">
-        <button type="submit" onauxclick="openActionInNewTab(this)" class="btn btn-secondary rounded-pill mx-auto mx-lg-0 mt-2 extra-navs"
+    <form class="no-ajax"  action="/user/{{ .user.Display }}/settings">
+        <button type="submit" class="btn btn-secondary rounded-pill mx-auto mx-lg-0 mt-2 extra-navs"
                 id="nav-active">
 
             <svg class="btn-icon text-muted" width="28" height="28" data-jam="cog">
