@@ -1,0 +1,300 @@
+<!-- Edit image description modal -->
+<div class="modal fade" id="image_description_modal" tabindex="-1" role="dialog" aria-labelledby="imageDescriptionModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content bg-dark">
+      <div class="modal-header py-2 border-dark modal-left-align">
+        <button type="button" class="close text-primary" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <strong>Editing image description</strong>
+      </div>
+      <div class="modal-body row m-1 w-100 d-block">
+        <form method="POST">
+          <input type="hidden" name="user_action" value="change_image_description">
+          <input type="hidden" name="img_src" value="">
+
+          <div class="mb-2 input-group cool-input">
+            <div class="input-group-prepend">
+              <label class="input-group-text" for="img-description">Alt Text</label>
+            </div>
+            <input type="text" name="img_description"
+                   class="form-control" id="img-description"
+                   placeholder="image description (optional)"
+                   autocomplete="off" required>
+          </div>
+          <button onclick="submitImageDescription(this)" type="button" class="btn btn-primary rounded-pill float-right">
+            <strong>
+              Update
+            </strong>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Molt modal -->
+<div class="modal fade draft-modal" id="compose_modal" tabindex="-1" role="dialog" aria-labelledby="composeModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content bg-dark">
+      <div class="modal-header py-2 border-dark">
+        <button type="button" class="close text-primary" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body row">
+        <div class="mini-molt-profile-box col-lg-1 mr-2">
+          <a href="/user/">
+            <div class="rounded-circle px43 profile-picture"
+                 style="background-image: url('/public/img/crabber_header.png');"></div>
+          </a>
+        </div>
+        <div class="mini-molt-text-box w-100 h-100 px-2 col">
+          <form action="/" method="POST" enctype="multipart/form-data" onsubmit="return subMolt(this);">
+            <div class="mini-compose-textarea">
+                                        <textarea onfocus="currentForm = this.form;" onfocusout="currentForm = null;" name="molt_content" rows="5" class="my-2 w-100"
+                                                  placeholder="How are you feeling?"></textarea>
+              <div class="compose-image-preview large-molt-media-container d-none mb-2 border border-dark rounded-media zindex-front" >
+                <input type="text" name="img_description" placeholder="image description"
+                       onkeydown="return blockSubmit(event);"
+                       class="bg-dark text-light form-control compose-image-description" onclick="event.stopPropagation();"
+                       autocomplete="off">
+                <img class="img-preview w-100">
+              </div>
+            </div>
+            <div class="mini-molt-actions d-flex flex-row justify-content-end w-100 compose-button-row">
+              <!-- NSFW toggle -->
+              <div class="molt-nsfw-toggle">
+                <div class="custom-control custom-switch">
+                  <input onchange="checkboxToggle(this)" type="checkbox"
+                         class="custom-control-input" id="toggle-nsfw-compose"
+                         name="nsfw"
+                         value='false'
+                  >
+                  <label class="custom-control-label text-muted" for="toggle-nsfw-compose">NSFW</label>
+                </div>
+              </div>
+
+              <!-- Image picker -->
+              <div class="attach-image file-input inline-block file-btn clickable">
+                <input type="file" class="custom-file-input" id="compose-molt-image-picker" name="molt-media"
+                       onchange="updateImgPreview(this);" accept="image/x-png,image/jpeg,image/png">
+                <label id="molt-image-picker-btn" class="custom-file-label open-file-btn" for="compose-molt-image-picker">
+                  <svg class="file-btn" width="28" height="28" data-jam="picture">
+                    <use href="#picture"></use>
+                  </svg>
+                </label>
+              </div>
+
+              <div class="file-btn clickable close-file-btn d-none" onclick="removeImg(this);">
+                <svg width="28" height="28" data-jam="close-rectangle">
+                  <use href="#close-rectangle"></use>
+                </svg>
+              </div>
+
+              <span class="mini-character-counter text-muted my-auto mr-3 d-none">140</span>
+              <input type="hidden" name="user_action" value="submit_molt">
+
+              <!-- Submit molt and reload in place -->
+              <button type="submit" class="btn btn-primary rounded-pill"><strong>Molt</strong></button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Quote Molt modal -->
+<div class="modal fade draft-modal" id="compose_quote_modal" tabindex="-1" role="dialog" aria-labelledby="composeQuoteModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content bg-dark">
+      <div class="modal-header py-2 border-dark">
+        <button type="button" class="close text-primary" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <strong>Quoting <a class="text-light" id="quote-to" href="">someone</a></strong>
+      </div>
+      <div class="modal-body row">
+        <div class="mini-molt-profile-box col-lg-1 mr-2">
+          <a href="/user/">
+            <div class="rounded-circle px43 profile-picture"
+                 style="background-image: url('/public/img/crabber_header.png');"></div>
+          </a>
+        </div>
+        <div class="mini-molt-text-box w-100 h-100 px-2 col">
+          <form action="/" method="POST" enctype="multipart/form-data" onsubmit="return subMolt(this);">
+            <div class="mini-compose-reply-textarea">
+                                        <textarea onfocus="currentForm = this.form;" onfocusout="currentForm = null;" name="molt_content" rows="5" class="my-2 w-100"
+                                                  placeholder="Remember to be kind"></textarea>
+              <div class="compose-image-preview large-molt-media-container d-none mb-2 border border-dark rounded-media zindex-front" >
+                <input type="text" name="img_description" placeholder="image description"
+                       onkeydown="return blockSubmit(event);"
+                       class="bg-dark text-light form-control compose-image-description" onclick="event.stopPropagation();"
+                       autocomplete="off">
+                <img class="img-preview w-100"></img>
+              </div>
+            </div>
+            <div class="mini-molt-actions d-flex flex-row justify-content-end w-100 compose-button-row">
+
+              <!-- NSFW toggle -->
+              <div class="molt-nsfw-toggle">
+                <div class="custom-control custom-switch">
+                  <input onchange="checkboxToggle(this)" type="checkbox"
+                         class="custom-control-input" id="toggle-nsfw-quote"
+                         name="nsfw"
+                         value='false'
+                  >
+                  <label class="custom-control-label text-muted" for="toggle-nsfw-quote">NSFW</label>
+                </div>
+              </div>
+
+              <!-- Image picker -->
+              <div class="attach-image file-input inline-block file-btn clickable">
+                <input type="file" class="custom-file-input" id="quote-molt-image-picker" name="molt-media"
+                       onchange="updateImgPreview(this);" accept="image/x-png,image/jpeg,image/png">
+                <label id="molt-image-picker-btn" class="custom-file-label open-file-btn" for="quote-molt-image-picker">
+                  <svg class="file-btn" width="28" height="28" data-jam="picture">
+                    <use href="#picture"></use>
+                  </svg>
+                </label>
+              </div>
+
+              <div class="file-btn clickable close-file-btn d-none" onclick="removeImg(this);">
+
+                <svg width="28" height="28" data-jam="close-rectangle">
+                  <use href="#close-rectangle"></use>
+                </svg>
+              </div>
+
+              <span class="mini-character-counter text-muted my-auto mr-3 d-none">140</span>
+              <input type="hidden" name="user_action" value="submit_quote_molt">
+              <input type="hidden" id="quote-molt-id" name="molt_id" value="">
+              <button type="submit" class="btn btn-primary rounded-pill"><strong>Quote</strong></button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Molt reply modal -->
+<div class="modal fade draft-modal" id="compose_reply_modal" tabindex="-1" role="dialog" aria-labelledby="composeReplyModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content bg-dark">
+      <div class="modal-header py-2 border-dark">
+        <button type="button" class="close text-primary" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <strong>Replying to <a class="text-light" id="reply-to" href="">someone</a></strong>
+      </div>
+      <div class="modal-body row">
+        <div class="mini-molt-profile-box col-lg-1 mr-2">
+          <a href="/user/">
+            <div class="rounded-circle px43 profile-picture"
+                 style="background-image: url('/public/img/crabber_header.png');"></div>
+          </a>
+        </div>
+        <div class="mini-molt-text-box w-100 h-100 px-2 col">
+          <form action="/" method="POST" enctype="multipart/form-data" onsubmit="return subMolt(this);">
+            <div class="mini-compose-reply-textarea">
+                                        <textarea onfocus="currentForm = this.form;" onfocusout="currentForm = null;" name="molt_content" rows="5" class="my-2 w-100"
+                                                  placeholder="Remember to be kind"></textarea>
+              <div class="compose-image-preview large-molt-media-container d-none mb-2 border border-dark rounded-media zindex-front" >
+                <input type="text" name="img_description" placeholder="image description"
+                       onkeydown="return blockSubmit(event);"
+                       class="bg-dark text-light form-control compose-image-description" onclick="event.stopPropagation();"
+                       autocomplete="off">
+                <img class="img-preview w-100"></img>
+              </div>
+            </div>
+            <div class="mini-molt-actions d-flex flex-row justify-content-end w-100 compose-button-row">
+
+              <!-- NSFW toggle -->
+              <div class="molt-nsfw-toggle">
+                <div class="custom-control custom-switch">
+                  <input onchange="checkboxToggle(this)" type="checkbox"
+                         class="custom-control-input" id="toggle-nsfw-reply"
+                         name="nsfw"
+                         value='false'
+                  >
+                  <label class="custom-control-label text-muted" for="toggle-nsfw-reply">NSFW</label>
+                </div>
+              </div>
+
+              <!-- Image picker -->
+              <div class="attach-image file-input inline-block file-btn clickable">
+                <input type="file" class="custom-file-input" id="reply-molt-image-picker" name="molt-media"
+                       onchange="updateImgPreview(this);" accept="image/x-png,image/jpeg,image/png">
+                <label id="molt-image-picker-btn" class="custom-file-label open-file-btn" for="reply-molt-image-picker">
+                  <svg class="file-btn" width="28" height="28" data-jam="picture">
+                    <use href="#picture"></use>
+                  </svg>
+                </label>
+              </div>
+
+              <div class="file-btn clickable close-file-btn d-none" onclick="removeImg(this);">
+
+                <svg width="28" height="28" data-jam="close-rectangle">
+                  <use href="#close-rectangle"></use>
+                </svg>
+              </div>
+
+              <span class="mini-character-counter text-muted my-auto mr-3 d-none">140</span>
+              <input type="hidden" name="user_action" value="submit_reply_molt">
+              <input type="hidden" id="reply-molt-id" name="molt_id" value="">
+              <button type="submit" class="btn btn-primary rounded-pill"><strong>Reply</strong></button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Molt modal -->
+<div class="modal fade draft-modal" id="edit_molt_modal" tabindex="-1" role="dialog" aria-labelledby="editMoltModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content bg-dark">
+      <div class="modal-header py-2 border-dark">
+        <button type="button" class="close text-primary" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <strong>Editing your own Molt</a></strong>
+      </div>
+      <div class="modal-body row">
+        <div class="mini-molt-profile-box col-lg-1 mr-2">
+          <a href="/user/">
+            <div class="rounded-circle px43 profile-picture"
+                 style="background-image: url('/public/img/crabber_header.png');"></div>
+          </a>
+        </div>
+        <div class="mini-molt-text-box w-100 h-100 px-2 col">
+          <form action="/" method="POST" enctype="multipart/form-data" onsubmit="return subMolt(this);">
+            <div class="mini-compose-reply-textarea">
+                                        <textarea onfocus="currentForm = this.form;" onfocusout="currentForm = null;" id="edit-content" name="molt_content" rows="5" class="my-2 w-100"
+                                                  placeholder="Remember to be kind" required></textarea>
+            </div>
+            <div class="mini-molt-actions d-flex flex-row justify-content-end w-100 compose-button-row">
+              <span class="mini-character-counter text-muted my-auto mr-3 d-none">140</span>
+              <input type="hidden" name="user_action" value="submit_molt_edit">
+              <input type="hidden" id="edit-molt-id" name="molt_id" value="">
+              <button type="submit" class="btn btn-primary rounded-pill"><strong>Save</strong></button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Image expand modal -->
+<div class="modal fade" id="image_modal" tabindex="-1" role="dialog" aria-labelledby="composeModalLabel" aria-hidden="true">
+  <div class="modal-dialog image-modal-body absolute-center" role="document">
+    <!-- <img class="absolute-center" src="" alt="Expanded image"> -->
+  </div>
+</div>

@@ -1,0 +1,251 @@
+{{template "header.html" .}}
+<body class="bg-dark text-light">
+<div class="container-fluid vh-100 master-container">
+    <div class="row h-100 justify-content-center">
+        <!-- Nav Panel -->
+        {{ template "nav.html" . }}
+
+        <!-- Modals -->
+        {{ template "modals.html" . }}
+
+        {{ if .IsSelf }}
+            <!-- Main Content -->
+            <div id="content-body" onscroll="updateScrollback();" class="h-100">
+            <div class="p-2 w-100 no-h-scroll">
+                <h2 class="mb-3">Bio</h2>
+                <form method="POST" action="/user/settings" enctype="multipart/form-data" class="p-2">
+                    <input type="hidden" name="user_action" value="update_description" autofocus>
+                    <input type="hidden" name="page" value="settings">
+                    <input type="hidden" name="user_id" value="{{ .user.ID }}">
+                    <!-- Description -->
+                    <div class="form-group cool-input">
+                        <label for="description">About me</label>
+                        <textarea type="text" name="description" class="bg-dark form-control text-light" id="description" placeholder="I'm too tired, maybe later."
+                                  required aria-required oninput="validateDescription()">{{ .user.Description }}</textarea>
+                    </div>
+                    <!-- Website -->
+                    <div class="form-group cool-input">
+                        <label for="website">Website <span class="text-muted">(optional)</span></label>
+                        <input type="text" name="website" class="form-control" id="website" oninput="validateField(this, 'website', false)"
+                               placeholder="https://onlycrabs.com/bigred" value="{{ .user.Website }}">
+                    </div>
+                    <!-- Submit button -->
+                    <button id="bio-save" class="btn btn-primary rounded-pill mt-3 float-right" type="submit"><strong>Save</strong></button>
+                    <div class="clearfix"></div>
+                </form>
+
+                <!-- Section border -->
+                <hr class="border-dark mb-3 mt-4">
+
+                <form method="POST" class="p-2">
+                    <input type="hidden" name="user_action" value="change_password">
+                    <h3 class="mb-3">Change password</h3>
+
+                    <!-- Old Pass -->
+                    <div class="form-group cool-input">
+                        <label for="old-password">Current password</label>
+                        <input type="password" name="old-password" class="form-control" id="old-password" required aria-required>
+                    </div>
+
+                    <!-- New Pass -->
+                    <div class="form-group cool-input">
+                        <label for="new-password">New password</label>
+                        <input type="password" name="new-password" class="form-control" id="new-password" autocomplete="new-password" required aria-required>
+                    </div>
+
+                    <!-- Confirm pass -->
+                    <div class="form-group cool-input">
+                        <label for="confirm-new-password">Confirm new password</label>
+                        <input type="password" name="confirm-password" class="form-control" id="confirm-new-password" autocomplete="new-password" required aria-required>
+                    </div>
+
+                    <!-- Submit button -->
+                    <button class="btn btn-primary rounded-pill mt-3 float-right" type="submit"><strong>Change Password</strong></button>
+                    <div class="clearfix"></div>
+                </form>
+
+                <!-- Section border -->
+                <hr class="border-dark mb-3 mt-4">
+
+                <h2 class="mb-3">Content Filtering</h2>
+                <form method="POST" class="p-2">
+                    <input type="hidden" name="user_action" value="update_content_filters">
+                    <!-- Muted Words -->
+                    <div class="form-group cool-input">
+                        <label for="description">Muted words (comma separated)</label>
+                        <textarea type="text" name="muted_words"
+                                  class="bg-dark form-control text-light" id="muted-words"
+                                  placeholder="emacs, lua, twitter"
+                        ></textarea>
+                    </div>
+
+                    <!-- NSFW Toggle -->
+                    <div class="form-group cool-input mb-2">
+                        <script>
+                            function confirmAge(elem) {
+                                if (elem.checked) {
+                                    elem.checked = confirm('Are you 18 years or older?');
+                                }
+                                elem.value = elem.checked;
+                            }
+                        </script>
+                        <div class="custom-control custom-switch">
+                            <input onchange="return confirmAge(this)" type="checkbox" class="custom-control-input" id="toggle-nsfw-mode"
+                                   name="nsfw_mode"
+                            value=""
+                            >
+                            <label class="custom-control-label" for="toggle-nsfw-mode">Display NSFW Content</label>
+                        </div>
+                    </div>
+
+                    <!-- Blocked users -->
+                    <div class="mb-2">
+                        <a href="javascript:void(0);" class="text-muted" onclick="toggleModal('#blocked_modal');">
+                            Click here to see a list of users you've blocked.
+                        </a>
+                    </div>
+
+                    <!-- Submit button -->
+                    <button class="btn btn-primary rounded-pill mt-3 float-right" type="submit">
+                        <strong>
+                            Save
+                        </strong>
+                    </button>
+
+                    <div class="clearfix"></div>
+                </form>
+
+                <!-- Section border -->
+                <hr class="border-dark mb-3 mt-4">
+
+                <!-- Section border -->
+                <hr class="border-dark mb-3 mt-4">
+
+                <h2 class="mb-3">Danger Zone</h2>
+                <form class="p-2">
+                    <p>
+                        Looking to delete your account? You can
+                        <a href="/delete-account">
+                            do that here.
+                        </a>
+                    </p>
+                    <div class="clearfix"></div>
+                </form>
+
+                <!-- Section border -->
+                <hr class="border-dark mb-3 mt-4">
+
+                <h2 class="mb-3">
+            <span class="glitch-wrapper">
+                <span class="glitch" data-text="[REDACTED]">
+                    [REDACTED] ZONE
+                </span>
+            </span>
+                </h2>
+                <form method="POST" class="p-2" onchange="updateStylePreferences(this);">
+                    <input type="hidden" name="user_action" value="style_settings">
+
+                    <p>Exercise EXTREME caution.<p>
+
+                    <!-- Light Mode -->
+                    <div class="form-group cool-input mb-2">
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="toggle-light-mode"
+                                   name="light_mode">
+                            <label class="custom-control-label" for="toggle-light-mode">Light Mode</label>
+                        </div>
+                    </div>
+
+                    <!-- Dyslexic Mode -->
+                    <div class="form-group cool-input mb-2">
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="toggle-dyslexic-mode"
+                                   name="dyslexic_mode">
+                            <label class="custom-control-label" for="toggle-dyslexic-mode">Dyslexic Mode</label>
+                        </div>
+                    </div>
+
+                    <!-- Comic Sans Mode -->
+                    <div class="form-group cool-input mb-2">
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="toggle-comicsans-mode"
+                                   name="comicsans_mode">
+                            <label class="custom-control-label" for="toggle-comicsans-mode">Comic Sans Mode</label>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Spacer -->
+                <div class="d-inline-block w-100 py-5 my-5 text-muted text-molt text-center"></div>
+            </div>
+
+
+            <!-- Spacer -->
+            <div class="d-inline-block w-100 p-5 my-5 text-muted text-molt text-center"></div>
+
+            <!-- This is where dynamic toasts will show up -->
+            <div id="toaster-coaster">
+            </div>
+
+            <script async>
+                attachCharacterCounters();
+            </script>
+            <script>
+                // Stop autofocus
+                document.querySelector("input[name='lastfm']").blur();
+                document.body.scrollTop = 0; // For Safari
+                document.documentElement.scrollTop = 0; // For Chrome, Firefox, IE and Opera
+
+                var limits = 160;
+                limits = JSON.parse(limits);
+
+                function validateDescription() {
+                    const input = $('#description');
+                    const content = input.val();
+                    if (content.length >= limits['description'])
+                        input.val(content.substring(0, limits['description']));
+                }
+            </script>
+            <!-- Ctrl-Enter form submit -->
+            <script>
+                var currentForm = null;
+                $(document).keypress(
+                    function(event) {
+                        if (event.keyCode === 13 && event.ctrlKey) {
+                            if (currentForm) {
+                                event.preventDefault();
+                                if ($(currentForm).find('button[type=submit]').attr('disabled') == null) {
+                                    currentForm.submit()
+                                }
+                            }
+                        }
+                    }
+                );
+
+                $('.draft-modal').on('shown.bs.modal', function() {
+                    $(this).find('textarea').focus();
+                });
+
+                // IT WAS THAT EASY THE WHOLE TIME???
+                const target = document.getElementById('content-body');
+                $('.master-container div.row.h-100').on('wheel', function(event) {
+                    if (event.target.closest('#content-body') == null) {
+                        target.scrollTop += event.originalEvent.deltaY;
+                    }
+                });
+            </script>
+        </div>
+        {{ end }}
+
+        {{ if not .IsSelf }}
+            <h1>You're not supposed to be here...</h1>
+        {{ end }}
+
+    <!-- Additional Panel -->
+    {{ template "search.html" . }}
+</div>
+
+</body>
+</html>
+
+

@@ -7,7 +7,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-	log "github.com/sirupsen/logrus"
 	"time"
 )
 
@@ -22,21 +21,64 @@ type User struct {
 	SK             string `dynamodbav:"SK"`
 	GSI1PK         string `dynamodbav:"GSI1PK"`
 	GSI1SK         string `dynamodbav:"GSI1SK"`
-	Created        string `dynamodbav:"created"`
-	Name           string `dynamodbav:"name"`
-	Email          string `dynamodbav:"email"`
-	Display        string `dynamodbav:"display"`
-	Description    string `dynamodbav:"description"`
-	Verified       bool   `dynamodbav:"verified"`
-	Banner         string `dynamodbav:"banner"`
 	Avatar         string `dynamodbav:"avatar"`
-	Banned         bool   `dynamodbav:"banned"`
+	Banner         string `dynamodbav:"banner"`
+	Created        string `dynamodbav:"created"`
+	Description    string `dynamodbav:"description"`
+	Display        string `dynamodbav:"display"`
+	Email          string `dynamodbav:"email"`
+	Name           string `dynamodbav:"name"`
 	Website        string `dynamodbav:"website"`
+	Verified       bool   `dynamodbav:"verified"`
+	Banned         bool   `dynamodbav:"banned"`
 	Deleted        bool   `dynamodbav:"deleted"`
+	Moderator      bool   `dynamodbav:"moderator"`
 	FollowerCount  int    `dynamodbav:"follower_count"`
 	FollowingCount int    `dynamodbav:"following_count"`
 	MoltCount      int    `dynamodbav:"molt_count"`
 	LikeCount      int    `dynamodbav:"like_count"`
+}
+
+// UpdateSettings - updates a string attribute associated with user
+func (u *User) UpdateSettings(svc ItemService, tablename, de, w, di string) error {
+	// update the user by the attrName
+	if de != "" {
+		err := u.UpdateStrAttr(svc, tablename, "description", de)
+		if err != nil {
+			fmt.Printf("ERR: %s", err)
+		}
+	}
+	if w != "" {
+		err := u.UpdateStrAttr(svc, tablename, "website", w)
+		if err != nil {
+			fmt.Printf("ERR: %s", err)
+		}
+	}
+	return nil
+
+}
+
+// UpdateStringAttr - updates a string attribute associated with user
+func (u *User) UpdateStrAttr(svc ItemService, tablename string, attr string, val string) error {
+	// update the user by the attrName
+	out, err := svc.ItemTable.UpdateItem(context.TODO(), &dynamodb.UpdateItemInput{
+		TableName: aws.String(tablename),
+		Key: map[string]types.AttributeValue{
+			"PK": &types.AttributeValueMemberS{Value: u.PK},
+			"SK": &types.AttributeValueMemberS{Value: u.SK},
+		},
+		UpdateExpression: aws.String(fmt.Sprintf("set %s = :%s", attr, attr)),
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			fmt.Sprintf(":%s", attr): &types.AttributeValueMemberS{Value: val},
+		},
+	})
+
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(out.Attributes)
+	return nil
 }
 
 // Add - creates user record in table
@@ -61,14 +103,9 @@ func (u *User) Add(svc ItemService, tablename string) error {
 	})
 	// TODO gin flash e-mail is taken
 	if err != nil {
-		log.Printf("Couldn't add item to table: %v\n", err)
+		fmt.Printf("Couldn't add item to table: %v\n", err)
 	}
 	return err
-}
-
-// Update - change a user's attributes
-func (u *User) Update(svc ItemService, tablename string) error {
-	return nil
 }
 
 // Delete - removes a user from Lobsterer DB & Cognito

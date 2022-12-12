@@ -1,10 +1,15 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
-	"github.com/toul-codes/lobsterer/models"
-	"net/http"
+	"mime"
+	"path/filepath"
+
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -14,6 +19,8 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
+	"github.com/toul-codes/lobsterer/models"
+	"net/http"
 )
 
 type user struct {
@@ -243,6 +250,183 @@ func Profile(c *gin.Context) {
 		"IsSelf":      uid == usr.ID,
 		"CurrentUser": usr,
 	})
+}
+
+func Settings(c *gin.Context) {
+	// check db for username & id?
+	username := c.Params.ByName("username")
+	is := models.NewItemService(&models.DynamoConfig{
+		Region: "us-west-2",
+		Url:    "http://localhost:8000",
+		AKID:   "getGudKid",
+		SAC:    "eatMorCrabs",
+		ST:     "thisissuchasecret",
+		Source: "noneofthismattersitsalllocalyfake",
+	})
+	usr, err := models.ByName(username, is, models.TableName)
+	if err != nil {
+		log.Error("Error:", err)
+		c.HTML(http.StatusOK, "404.html", nil)
+		return
+	}
+
+	sessionStore := sessions.Default(c)
+	uid := sessionStore.Get(userKey)
+	//currentUser, _ := findUserByID(uid.(string))
+	session := sessions.Default(c)
+	session.Save()
+	//  have usr  data so can pass it to the user.html
+	c.HTML(http.StatusOK, "settings.html", gin.H{
+		"user":        usr,
+		"IsSelf":      uid == usr.ID,
+		"CurrentUser": usr,
+	})
+
+}
+
+// UpdateSettings - changes users profile information
+func UpdateSettings(c *gin.Context) {
+	sessionStore := sessions.Default(c)
+	uid := fmt.Sprintf("%s", sessionStore.Get(userKey))
+	description := c.PostForm("description")
+	website := c.PostForm("website")
+	display := c.PostForm("display_name")
+	fmt.Sprintf("desc %s, webs %s, dis %s", description, website, display)
+	svc := models.LocalService()
+	u, _ := models.ByID(uid, svc, models.TableName)
+	fmt.Printf("\nUSER: +v", u)
+	err := u.UpdateSettings(svc, models.TableName, description, website, display)
+	if err != nil {
+		c.String(http.StatusBadRequest, fmt.Sprintf("Update settings failed photo err: %s", err.Error()))
+		fmt.Print("err", err)
+	}
+	// refresh page
+
+	c.Redirect(http.StatusFound, fmt.Sprintf("/user/%s", u.Display))
+}
+
+// ChangeAvatar - adds avatar url to users profile
+func ChangeAvatar(c *gin.Context) {
+	sessionStore := sessions.Default(c)
+	jwt := sessionStore.Get(accessToken)
+	cog := NewCognito()
+	sub, err := cog.ValidateToken(jwt.(string))
+	uid := fmt.Sprintf("%s", sessionStore.Get(userKey))
+
+	_, err = c.MultipartForm()
+
+	if err != nil {
+		c.String(http.StatusBadRequest, fmt.Sprintf("get form err: %s", err.Error()))
+		return
+	}
+
+	file, header, err := c.Request.FormFile("photofile")
+
+	if err != nil {
+		log.Errorf("Error uploading file %v", err)
+		return
+	}
+
+	defer file.Close()
+
+	// Upload file to S3 bucket
+	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion("us-west-2"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	awsS3Client := s3.NewFromConfig(cfg)
+	key := sub + "/" + header.Filename
+	uploader := manager.NewUploader(awsS3Client)
+
+	_, err = uploader.Upload(context.TODO(), &s3.PutObjectInput{
+		Bucket:      aws.String("lobsterer-avatars"),
+		Key:         aws.String(key),
+		Body:        file,
+		ContentType: aws.String(mime.TypeByExtension(filepath.Ext(header.Filename))),
+	})
+
+	if err != nil {
+		log.Errorf("Unable to upload file %q, %v", header.Filename, err)
+		c.String(http.StatusBadRequest, fmt.Sprintf("Upload file err: %s", err.Error()))
+		return
+	}
+
+	log.Info("Uploaded file:", header.Filename)
+
+	// Insert DB record for photo and user
+	// update the avatar url for the user
+	svc := models.LocalService()
+	u, _ := models.ByID(uid, svc, models.TableName)
+	fmt.Printf("\nUSER: +v", u)
+	err = u.UpdateStrAttr(svc, models.TableName, "avatar", key)
+	if err != nil {
+		c.String(http.StatusBadRequest, fmt.Sprintf("Insert photo err: %s", err.Error()))
+		fmt.Print("err", err)
+	}
+	// refresh page
+	c.Redirect(http.StatusFound, fmt.Sprintf("/user/%s", u.Display))
+}
+
+// ChangeBanner - adds banner url to the users profile
+func ChangeBanner(c *gin.Context) {
+	sessionStore := sessions.Default(c)
+	jwt := sessionStore.Get(accessToken)
+	cog := NewCognito()
+	sub, err := cog.ValidateToken(jwt.(string))
+	uid := fmt.Sprintf("%s", sessionStore.Get(userKey))
+
+	_, err = c.MultipartForm()
+
+	if err != nil {
+		c.String(http.StatusBadRequest, fmt.Sprintf("get form err: %s", err.Error()))
+		return
+	}
+
+	file, header, err := c.Request.FormFile("bannerfile")
+
+	if err != nil {
+		log.Errorf("Error uploading file %v", err)
+		return
+	}
+
+	defer file.Close()
+
+	// Upload file to S3 bucket
+	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithRegion("us-west-2"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	awsS3Client := s3.NewFromConfig(cfg)
+	key := sub + "/" + header.Filename
+	uploader := manager.NewUploader(awsS3Client)
+
+	_, err = uploader.Upload(context.TODO(), &s3.PutObjectInput{
+		Bucket:      aws.String("lobsterer-avatars"),
+		Key:         aws.String(key),
+		Body:        file,
+		ContentType: aws.String(mime.TypeByExtension(filepath.Ext(header.Filename))),
+	})
+
+	if err != nil {
+		log.Errorf("Unable to upload file %q, %v", header.Filename, err)
+		c.String(http.StatusBadRequest, fmt.Sprintf("Upload file err: %s", err.Error()))
+		return
+	}
+
+	log.Info("Uploaded file:", header.Filename)
+
+	// Insert DB record for photo and user
+	// update the avatar url for the user
+	svc := models.LocalService()
+	u, _ := models.ByID(uid, svc, models.TableName)
+	fmt.Printf("\nUSER: +v", u)
+	err = u.UpdateStrAttr(svc, models.TableName, "banner", key)
+	if err != nil {
+		c.String(http.StatusBadRequest, fmt.Sprintf("Insert photo err: %s", err.Error()))
+		fmt.Print("err", err)
+	}
+	// refresh page
+	c.Redirect(http.StatusFound, fmt.Sprintf("/user/%s", u.Display))
 }
 
 func findUserByID(id string) (*user, error) {

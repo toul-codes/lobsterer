@@ -110,7 +110,6 @@ func (c *Cognito) SignUp(username string, password string, email string, fullNam
 	}
 
 	// Attempt login to get session value, which is used to confirm the user
-
 	aia := &cognitoidentityprovider.AdminInitiateAuthInput{
 		AuthFlow: aws.String("ADMIN_NO_SRP_AUTH"),
 		AuthParameters: map[string]*string{
@@ -125,13 +124,11 @@ func (c *Cognito) SignUp(username string, password string, email string, fullNam
 	authresp, autherr := c.cip.AdminInitiateAuth(aia)
 
 	log.Info("ChallengeName: ", aws.StringValue(authresp.ChallengeName))
-
 	if autherr != nil {
 		log.Warn(autherr.Error())
 	}
 
 	// Set user to CONFIRMED
-
 	artaci := &cognitoidentityprovider.AdminRespondToAuthChallengeInput{
 		ChallengeName: aws.String("NEW_PASSWORD_REQUIRED"), // Required
 		ClientId:      aws.String(clientID),                // Required
@@ -187,6 +184,24 @@ func (c *Cognito) SignIn(username string, password string) (string, error) {
 
 	return accessToken, nil
 }
+
+// ChangePWD - changes the users password
+func (c *Cognito) ChangePWD(accessToken, prev, new string) error {
+	chg := &cognitoidentityprovider.ChangePasswordInput{
+		AccessToken:      aws.String(accessToken),
+		PreviousPassword: aws.String(prev),
+		ProposedPassword: aws.String(new),
+	}
+	res, err := c.cip.ChangePassword(chg)
+	if err != nil {
+		fmt.Printf("err: %s", err)
+	}
+	log.Info(res.String())
+
+	return nil
+}
+
+// ChangeUserName - changes user's display
 
 // ValidateToken validates a JWT token and returns the 'sub' claim.
 func (c *Cognito) ValidateToken(jwtToken string) (string, error) {
