@@ -62,6 +62,7 @@ require (
 	github.com/mattn/go-isatty v0.0.3 // indirect
 	github.com/mitchellh/mapstructure v0.0.0-20170523030023-d0303fe80992 // indirect
 	github.com/pelletier/go-toml v1.0.1 // indirect
+	github.com/segmentio/ksuid v1.0.4 // indirect
 	github.com/smartystreets/goconvey v1.7.2 // indirect
 	github.com/spf13/afero v0.0.0-20171004064803-3de492c3cda9 // indirect
 	github.com/spf13/cast v1.1.0 // indirect
