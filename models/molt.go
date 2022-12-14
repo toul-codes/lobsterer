@@ -26,40 +26,35 @@ type Molt struct {
 	CommentCount int    `dynamodbav:"comment_count"`
 }
 
+type Cache struct {
+	PK    string `dynamodbav:"PK"`
+	SK    string `dynamodbav:"SK"`
+	Molts []Molt `dynamodbav:"molts"`
+}
+
 // BuildCache - is a lambda function that runs every day to build the cache
 // then that same cache is what each user reads from
 // on the latest ocean molts page
 // currently builds 5 shards (5 copies of the 25 max latest molts)
 func BuildCache(svc ItemService, tablename string) {
 	// retrieve all deals from past day
-	m := Latest(svc, tablename)
-	for i := 0; i < 5; i++ {
-		for j := 0; j < len(m)-1; j++ {
-			mc := &Molt{
-				ID:           "",
-				PK:           fmt.Sprintf("MC#%d", i),
-				SK:           fmt.Sprintf("MC#%d#%s", i, m[j].Author), // have to have a different SK b/c it is overwriting it.
-				GSI3PK:       m[j].GSI3PK,
-				GSI3SK:       m[j].GSI3SK,
-				Author:       m[j].Author,
-				Content:      m[j].Content,
-				Url:          m[j].Url,
-				Deleted:      m[j].Deleted,
-				LikeCount:    m[j].LikeCount,
-				RemoltCount:  m[j].RemoltCount,
-				CommentCount: m[j].CommentCount,
-			}
-
-			item, err := attributevalue.MarshalMap(mc)
-			if err != nil {
-				fmt.Println("ERR: ", err)
-				panic(err)
-			}
-			_, err = svc.ItemTable.PutItem(context.TODO(), &dynamodb.PutItemInput{
-				TableName: aws.String(tablename),
-				Item:      item,
-			})
+	l := Latest(svc, tablename)
+	for i := 1; i < 6; i++ {
+		c := &Cache{
+			PK:    fmt.Sprintf("MC#%d", i),
+			SK:    fmt.Sprintf("MC#%d", i),
+			Molts: l,
 		}
+		item, err := attributevalue.MarshalMap(c)
+		if err != nil {
+			fmt.Println("ERR: ", err)
+			panic(err)
+		}
+		_, err = svc.ItemTable.PutItem(context.TODO(), &dynamodb.PutItemInput{
+			TableName: aws.String(tablename),
+			Item:      item,
+		})
+
 	}
 }
 
@@ -160,31 +155,20 @@ func (u *User) Molts(svc ItemService, tablename string) []Molt {
 
 // CachedLatest - returns the collection of molts from a random N shard
 func CachedLatest(svc ItemService, tablename string) []Molt {
-	m := make([]Molt, 0)
-	var limit int32 = 25
 	rand.Seed(time.Now().UnixNano())
-	n := rand.Intn(5)
-	p := dynamodb.NewQueryPaginator(svc.ItemTable, &dynamodb.QueryInput{
-		TableName:              aws.String(tablename),
-		Limit:                  aws.Int32(limit),
-		KeyConditionExpression: aws.String("PK = :hashKey"),
-		ExpressionAttributeValues: map[string]types.AttributeValue{
-			":hashKey": &types.AttributeValueMemberS{Value: fmt.Sprintf("MC#%d", n)},
+	n := rand.Intn(6) // n will be between 0 and 10
+	out, _ := svc.ItemTable.GetItem(context.TODO(), &dynamodb.GetItemInput{
+		TableName: aws.String(tablename),
+		Key: map[string]types.AttributeValue{
+			"PK": &types.AttributeValueMemberS{Value: fmt.Sprintf("MC#%d", n)},
+			"SK": &types.AttributeValueMemberS{Value: fmt.Sprintf("MC#%d", n)},
 		},
-		ScanIndexForward: aws.Bool(false),
 	})
-	for p.HasMorePages() {
-		out, err := p.NextPage(context.TODO())
-		if err != nil {
-			fmt.Printf("ERR: %s", err)
-			panic(err)
-		}
-		err = attributevalue.UnmarshalListOfMaps(out.Items, &m)
-		if err != nil {
-			fmt.Printf("ERR: %s", err)
-			panic(err)
-		}
-
+	m := make([]Molt, 0)
+	molts := out.Item["molts"]
+	err := attributevalue.Unmarshal(molts, &m)
+	if err != nil {
+		fmt.Printf("ERR %s", err)
 	}
 	return m
 }
@@ -234,8 +218,12 @@ func (m *Molt) ByTime(svc ItemService, tablename string, text string) {
 
 }
 
-func (m *Molt) Re(svc ItemService, tablename string, text string) {
-
+func (m *Molt) Re(svc ItemService, tablename string, mid string) {
+	// (a) Remolt a molt from the ocean view
+	// (b) Remalt a molt from the trench view
+	// both scenarios require increments the 'original' molts Remolt Count
+	// so need to be able to access it from the CachedLatest
+	// can do query on GSI3PK (today) where author == cachedAuthor
 }
 
 func (m *Molt) Delete(svc ItemService, tablename string, text string) {

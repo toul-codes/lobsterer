@@ -1,40 +1,36 @@
 package models
 
 import (
-	"context"
 	"fmt"
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	"log"
 	"math/rand"
 	"strconv"
 	"testing"
 	"time"
 )
 
-func TestPrint(t *testing.T) {
-	is := LocalService()
-	Print(is.ItemTable, TableName)
-}
-
-//func TestCleanUp(t *testing.T) {
-//	CleanUp()
+//func TestPrint(t *testing.T) {
+//	is := LocalService()
+//	Print(is.ItemTable, TableName)
 //}
 
-func TestDeleteAllItems(t *testing.T) {
-	is := LocalService()
-	SetUp()
-	err := DeleteAllItems(is.ItemTable, TableName)
-	if err != nil {
-		log.Fatal("failed to delete all items", err)
-	}
-	scan, err := is.ItemTable.Scan(context.TODO(), &dynamodb.ScanInput{TableName: aws.String(TableName)})
-	if err != nil {
-		log.Fatal("scan failed", err)
-	}
-	log.Printf("expected scan to have zero items; it had len=%d\n", len(scan.Items))
+func TestCleanUp(t *testing.T) {
 	CleanUp()
 }
+
+//func TestDeleteAllItems(t *testing.T) {
+//	is := LocalService()
+//	SetUp()
+//	err := DeleteAllItems(is.ItemTable, TableName)
+//	if err != nil {
+//		log.Fatal("failed to delete all items", err)
+//	}
+//	scan, err := is.ItemTable.Scan(context.TODO(), &dynamodb.ScanInput{TableName: aws.String(TableName)})
+//	if err != nil {
+//		log.Fatal("scan failed", err)
+//	}
+//	log.Printf("expected scan to have zero items; it had len=%d\n", len(scan.Items))
+//	CleanUp()
+//}
 
 func TestNewItemService(t *testing.T) {
 	is := LocalService()
@@ -150,11 +146,10 @@ func TestCreateMolt(t *testing.T) {
 	if f.MoltCount != want {
 		fmt.Errorf("got: %d, want: %d", f.MoltCount, want)
 	}
-	Print(is.ItemTable, TableName)
 	CleanUp()
 }
 
-func TestMolts(t *testing.T) {
+func TestUser_CreateMolt(t *testing.T) {
 	is := LocalService()
 	SetUp()
 	f, _ := ByID("1", is, TableName)
@@ -166,7 +161,6 @@ func TestMolts(t *testing.T) {
 	}
 	r := f.Molts(is, TableName)
 	fmt.Printf("\n\n%+v", r)
-	//Print(is.ItemTable, TableName)
 	CleanUp()
 }
 
@@ -180,7 +174,7 @@ func TestLatest(t *testing.T) {
 	f5, _ := ByID("5", is, TableName)
 
 	rand.Seed(time.Now().UnixNano())
-	n := rand.Intn(5) // n will be between 0 and 10
+	n := 3 // n will be between 0 and 10
 	f1.CreateMolt(is, TableName, "1")
 	fmt.Printf("\nSleeping %d seconds...\n", n)
 	time.Sleep(time.Duration(n) * time.Second)
@@ -195,10 +189,10 @@ func TestLatest(t *testing.T) {
 	time.Sleep(time.Duration(n) * time.Second)
 	f5.CreateMolt(is, TableName, "5")
 	BuildCache(is, TableName)
-	r := CachedLatest(is, TableName)
-	for _, m := range r {
-		fmt.Printf("\n%+v", m)
+	mc := CachedLatest(is, TableName)
+	for _, cachedMolt := range mc {
+		fmt.Printf("\nMC: %v", cachedMolt)
 	}
-	//Print(is.ItemTable, TableName)
+
 	CleanUp()
 }
