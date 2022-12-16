@@ -7,7 +7,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-	"math/rand"
 	"time"
 )
 
@@ -39,6 +38,7 @@ type Cache struct {
 func BuildCache(svc ItemService, tablename string) {
 	// retrieve all deals from past day
 	l := Latest(svc, tablename)
+	fmt.Printf("Length of latest is: %d", len(l))
 	for i := 1; i < 6; i++ {
 		c := &Cache{
 			PK:    fmt.Sprintf("MC#%d", i),
@@ -56,6 +56,65 @@ func BuildCache(svc ItemService, tablename string) {
 		})
 
 	}
+}
+
+// CachedLatest - returns the collection of molts from a random N shard
+func CachedLatest(svc ItemService, tablename string, cache int) []Molt {
+	out, err := svc.ItemTable.GetItem(context.TODO(), &dynamodb.GetItemInput{
+		TableName: aws.String(tablename),
+		Key: map[string]types.AttributeValue{
+			"PK": &types.AttributeValueMemberS{Value: fmt.Sprintf("MC#%d", cache)},
+			"SK": &types.AttributeValueMemberS{Value: fmt.Sprintf("MC#%d", cache)},
+		},
+	})
+	fmt.Printf("\nReading from Cache #: %d", cache)
+	if err != nil {
+		fmt.Errorf("ERR: %s", err)
+	}
+	m := make([]Molt, 0)
+	molts := out.Item["molts"]
+	err = attributevalue.Unmarshal(molts, &m)
+	if err != nil {
+		fmt.Printf("ERR %s", err)
+	}
+	return m
+}
+
+// Latest - returns the latest 25 molts overall from the community
+// it is not returning more than 2... b/c size limit..?
+func Latest(svc ItemService, tablename string) []Molt {
+
+	var limit int32 = 25
+
+	now := time.Now()
+	y, mnth, d := now.Date()
+	p := dynamodb.NewQueryPaginator(svc.ItemTable, &dynamodb.QueryInput{
+		TableName:              aws.String(tablename),
+		Limit:                  aws.Int32(limit),
+		IndexName:              aws.String("GSI3"),
+		KeyConditionExpression: aws.String("GSI3PK = :hashKey"),
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":hashKey": &types.AttributeValueMemberS{Value: "M#" + fmt.Sprintf("%d-%d-%d", y, int(mnth), d)},
+		},
+		ScanIndexForward: aws.Bool(false),
+	})
+	var items []Molt
+	for p.HasMorePages() {
+		out, err := p.NextPage(context.TODO())
+		if err != nil {
+			fmt.Printf("ERR: %s", err)
+			panic(err)
+		}
+		var pItems []Molt
+		err = attributevalue.UnmarshalListOfMaps(out.Items, &pItems)
+		if err != nil {
+			fmt.Printf("ERR: %s", err)
+			panic(err)
+		}
+		items = append(items, pItems...)
+
+	}
+	return items
 }
 
 // CreateMolt - adds molt to db and increments user's MoltCount
@@ -136,59 +195,6 @@ func (u *User) Molts(svc ItemService, tablename string) []Molt {
 			":hashKey": &types.AttributeValueMemberS{Value: "M#" + u.ID},
 		},
 		ScanIndexForward: aws.Bool(false), // retrieve users latest molts
-	})
-	for p.HasMorePages() {
-		out, err := p.NextPage(context.TODO())
-		if err != nil {
-			fmt.Printf("ERR: %s", err)
-			panic(err)
-		}
-		err = attributevalue.UnmarshalListOfMaps(out.Items, &m)
-		if err != nil {
-			fmt.Printf("ERR: %s", err)
-			panic(err)
-		}
-
-	}
-	return m
-}
-
-// CachedLatest - returns the collection of molts from a random N shard
-func CachedLatest(svc ItemService, tablename string) []Molt {
-	rand.Seed(time.Now().UnixNano())
-	n := rand.Intn(6) // n will be between 0 and 10
-	out, _ := svc.ItemTable.GetItem(context.TODO(), &dynamodb.GetItemInput{
-		TableName: aws.String(tablename),
-		Key: map[string]types.AttributeValue{
-			"PK": &types.AttributeValueMemberS{Value: fmt.Sprintf("MC#%d", n)},
-			"SK": &types.AttributeValueMemberS{Value: fmt.Sprintf("MC#%d", n)},
-		},
-	})
-	m := make([]Molt, 0)
-	molts := out.Item["molts"]
-	err := attributevalue.Unmarshal(molts, &m)
-	if err != nil {
-		fmt.Printf("ERR %s", err)
-	}
-	return m
-}
-
-// Latest - returns the latest 25 molts overall from the community
-func Latest(svc ItemService, tablename string) []Molt {
-	m := make([]Molt, 0)
-	var limit int32 = 25
-
-	now := time.Now()
-	y, mnth, d := now.Date()
-	p := dynamodb.NewQueryPaginator(svc.ItemTable, &dynamodb.QueryInput{
-		TableName:              aws.String(tablename),
-		Limit:                  aws.Int32(limit),
-		IndexName:              aws.String("GSI3"),
-		KeyConditionExpression: aws.String("GSI3PK = :hashKey"),
-		ExpressionAttributeValues: map[string]types.AttributeValue{
-			":hashKey": &types.AttributeValueMemberS{Value: "M#" + fmt.Sprintf("%d-%d-%d", y, int(mnth), d)},
-		},
-		ScanIndexForward: aws.Bool(false),
 	})
 	for p.HasMorePages() {
 		out, err := p.NextPage(context.TODO())
