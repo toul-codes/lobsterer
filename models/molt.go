@@ -7,6 +7,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"log"
+	"math/rand"
 	"time"
 )
 
@@ -31,15 +33,15 @@ type Cache struct {
 	Molts []Molt `dynamodbav:"molts"`
 }
 
-// BuildCache - is a lambda function that runs every day to build the cache
+// FillOcean - is a lambda function that runs every X hour to build the cache
 // then that same cache is what each user reads from
 // on the latest ocean molts page
 // currently builds 5 shards (5 copies of the 25 max latest molts)
-func BuildCache(svc ItemService, tablename string) {
+func FillOcean(svc ItemService, tablename string) {
 	// retrieve all deals from past day
 	l := Latest(svc, tablename)
 	fmt.Printf("Length of latest is: %d", len(l))
-	for i := 1; i < 6; i++ {
+	for i := 0; i < 5; i++ {
 		c := &Cache{
 			PK:    fmt.Sprintf("MC#%d", i),
 			SK:    fmt.Sprintf("MC#%d", i),
@@ -58,8 +60,10 @@ func BuildCache(svc ItemService, tablename string) {
 	}
 }
 
-// CachedLatest - returns the collection of molts from a random N shard
-func CachedLatest(svc ItemService, tablename string, cache int) []Molt {
+// Ocean - returns the collection  of the latest molts from a random N shard
+func Ocean(svc ItemService, tablename string) []Molt {
+	rand.Seed(time.Now().UnixNano())
+	cache := rand.Intn(5)
 	out, err := svc.ItemTable.GetItem(context.TODO(), &dynamodb.GetItemInput{
 		TableName: aws.String(tablename),
 		Key: map[string]types.AttributeValue{
@@ -67,7 +71,7 @@ func CachedLatest(svc ItemService, tablename string, cache int) []Molt {
 			"SK": &types.AttributeValueMemberS{Value: fmt.Sprintf("MC#%d", cache)},
 		},
 	})
-	fmt.Printf("\nReading from Cache #: %d", cache)
+	log.Printf("\nReading from Cache #: %d", cache)
 	if err != nil {
 		fmt.Errorf("ERR: %s", err)
 	}
@@ -80,17 +84,14 @@ func CachedLatest(svc ItemService, tablename string, cache int) []Molt {
 	return m
 }
 
-// Latest - returns the latest 25 molts overall from the community
-// it is not returning more than 2... b/c size limit..?
+// Latest - returns all the molts from past day
 func Latest(svc ItemService, tablename string) []Molt {
-
-	var limit int32 = 25
-
+	var limit int32 = 5
 	now := time.Now()
 	y, mnth, d := now.Date()
 	p := dynamodb.NewQueryPaginator(svc.ItemTable, &dynamodb.QueryInput{
 		TableName:              aws.String(tablename),
-		Limit:                  aws.Int32(limit),
+		Limit:                  aws.Int32(limit), // per pg so get 5 x number requests = amount of molts from today
 		IndexName:              aws.String("GSI3"),
 		KeyConditionExpression: aws.String("GSI3PK = :hashKey"),
 		ExpressionAttributeValues: map[string]types.AttributeValue{
@@ -184,7 +185,27 @@ func (u *User) CreateMolt(svc ItemService, tablename string, content string) err
 	return err
 }
 
+// Trench - create user's trench
+// GET /user/:user/trench
+func (u *User) Trench(svc ItemService, tablename string) []Molt {
+	// have Ocean that is built of sharded data by day
+	l := Ocean(svc, tablename)
+	following := u.Following(svc, tablename)
+	trench := make([]Molt, 0)
+	for _, f := range following {
+		// use f.SK[2:] b/c only need the ID value not the 'F#' to find user display
+		d, _ := ByID(f.SK[2:], svc, tablename)
+		for _, molt := range l {
+			if d.Display == molt.Author && d.Display != u.Display {
+				trench = append(trench, molt)
+			}
+		}
+	}
+	return trench
+}
+
 // Molts - returns the user's latest molts
+// / GET /user/:user/molts
 func (u *User) Molts(svc ItemService, tablename string) []Molt {
 	m := make([]Molt, 0)
 	p := dynamodb.NewQueryPaginator(svc.ItemTable, &dynamodb.QueryInput{
