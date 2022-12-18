@@ -12,6 +12,10 @@ import (
 	"time"
 )
 
+const (
+	shardSize = 5
+)
+
 type Molt struct {
 	ID           string `dynamodbav:"id"`
 	PK           string `dynamodbav:"PK"`
@@ -41,7 +45,7 @@ func FillOcean(svc ItemService, tablename string) {
 	// retrieve all deals from past day
 	l := Latest(svc, tablename)
 	fmt.Printf("Length of latest is: %d", len(l))
-	for i := 0; i < 5; i++ {
+	for i := 0; i < shardSize; i++ {
 		c := &Cache{
 			PK:    fmt.Sprintf("MC#%d", i),
 			SK:    fmt.Sprintf("MC#%d", i),
@@ -63,7 +67,7 @@ func FillOcean(svc ItemService, tablename string) {
 // Ocean - returns the collection  of the latest molts from a random N shard
 func Ocean(svc ItemService, tablename string) []Molt {
 	rand.Seed(time.Now().UnixNano())
-	cache := rand.Intn(5)
+	cache := rand.Intn(shardSize)
 	out, err := svc.ItemTable.GetItem(context.TODO(), &dynamodb.GetItemInput{
 		TableName: aws.String(tablename),
 		Key: map[string]types.AttributeValue{
