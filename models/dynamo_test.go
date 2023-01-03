@@ -1,7 +1,11 @@
 package models
 
 import (
+	"context"
 	"fmt"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"log"
 	"math/rand"
 	"strconv"
 	"testing"
@@ -17,20 +21,20 @@ func TestCleanUp(t *testing.T) {
 	CleanUp()
 }
 
-//func TestDeleteAllItems(t *testing.T) {
-//	is := LocalService()
-//	SetUp()
-//	err := DeleteAllItems(is.ItemTable, TableName)
-//	if err != nil {
-//		log.Fatal("failed to delete all items", err)
-//	}
-//	scan, err := is.ItemTable.Scan(context.TODO(), &dynamodb.ScanInput{TableName: aws.String(TableName)})
-//	if err != nil {
-//		log.Fatal("scan failed", err)
-//	}
-//	log.Printf("expected scan to have zero items; it had len=%d\n", len(scan.Items))
-//	CleanUp()
-//}
+func TestDeleteAllItems(t *testing.T) {
+	is := LocalService()
+	SetUp()
+	err := DeleteAllItems(is.ItemTable, TableName)
+	if err != nil {
+		log.Fatal("failed to delete all items", err)
+	}
+	scan, err := is.ItemTable.Scan(context.TODO(), &dynamodb.ScanInput{TableName: aws.String(TableName)})
+	if err != nil {
+		log.Fatal("scan failed", err)
+	}
+	log.Printf("expected scan to have zero items; it had len=%d\n", len(scan.Items))
+	CleanUp()
+}
 
 func TestNewItemService(t *testing.T) {
 	is := LocalService()
@@ -254,13 +258,15 @@ func TestLatest(t *testing.T) {
 	fmt.Printf("\nSleeping %d seconds...\n", n)
 	time.Sleep(time.Duration(n) * time.Second)
 	f2.CreateMolt(is, TableName, "25lkbcrqbnaiqbsxfnuhmxszgzzazqlekimwegglwsqcubixlxvexlmulgehefnqhzuzelclmctrjtstzbndnadnztagmxebzbrdgtwmpdmmljajjfsoqbzwcohnwnsiztnxuuaggotqmencxnudsfvtzbfsxwswjbgwjbwqnajucuphtnmqjhwexptdjvwnrifixeivaesycopelxrmempnmfmebnlgdipbiqiscmrychwmfahleysstvvqqekoftiregepoaecdfrvlgykirkcinwwtitsgsmlqyvvcfwtqvtrkyxpjapumojopjotjnpczxbonyemqkdlyrwkgopbmwwnmknzqiynxwvvtoltydorkygparytpnhrbxwktpiklhytwqpbyyvdfkvrwackgewsdfuuxdgldxqemynlvtzldsxsipsmdavmiokamkymogcuyhlqnthamimeusbmuhnjsxuldmikvnwvwsbujllqgfqelzzifhfquqqtbfbj")
+	f1.Like(is, TableName, "M#3")
 	FillOcean(is, TableName)
 
 	f1.Follow(is, TableName, "3")
-	f1.Follow(is, TableName, "5")
+
 	res := f1.Trench(is, TableName)
 	for _, m := range res {
 		fmt.Printf("\n%+v", m)
 	}
+
 	CleanUp()
 }

@@ -134,6 +134,22 @@ func buildCreateTableInput(tableName string) *dynamodb.CreateTableInput {
 				AttributeName: aws.String("GSI3SK"),
 				AttributeType: types.ScalarAttributeTypeS,
 			},
+			{
+				AttributeName: aws.String("GSI4PK"),
+				AttributeType: types.ScalarAttributeTypeS,
+			},
+			{
+				AttributeName: aws.String("GSI4SK"),
+				AttributeType: types.ScalarAttributeTypeS,
+			},
+			{
+				AttributeName: aws.String("GSI5PK"),
+				AttributeType: types.ScalarAttributeTypeS,
+			},
+			{
+				AttributeName: aws.String("GSI5SK"),
+				AttributeType: types.ScalarAttributeTypeS,
+			},
 		},
 		KeySchema: []types.KeySchemaElement{
 			{
@@ -186,6 +202,37 @@ func buildCreateTableInput(tableName string) *dynamodb.CreateTableInput {
 					},
 					{
 						AttributeName: aws.String("GSI3SK"),
+						KeyType:       types.KeyTypeRange,
+					},
+				},
+				Projection: &types.Projection{
+					ProjectionType: "ALL",
+				},
+			}, {
+				IndexName: aws.String("GSI4"),
+				KeySchema: []types.KeySchemaElement{
+					{
+						AttributeName: aws.String("GSI4PK"),
+						KeyType:       types.KeyTypeHash,
+					},
+					{
+						AttributeName: aws.String("GSI4SK"),
+						KeyType:       types.KeyTypeRange,
+					},
+				},
+				Projection: &types.Projection{
+					ProjectionType: "ALL",
+				},
+			},
+			{
+				IndexName: aws.String("GSI5"),
+				KeySchema: []types.KeySchemaElement{
+					{
+						AttributeName: aws.String("GSI5PK"),
+						KeyType:       types.KeyTypeHash,
+					},
+					{
+						AttributeName: aws.String("GSI5SK"),
 						KeyType:       types.KeyTypeRange,
 					},
 				},

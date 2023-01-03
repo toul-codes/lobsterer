@@ -37,6 +37,13 @@ type Cache struct {
 	Molts []Molt `dynamodbav:"molts"`
 }
 
+type Like struct {
+	PK     string `dynamodbav:"PK"`
+	SK     string `dynamodbav:"SK"`
+	GSI4PK string `dynamodbav:"GSI4PK"`
+	GSI4SK string `dynamodbav:"GSI4SK"`
+}
+
 // FillOcean - is a lambda function that runs every X hour to build the cache
 // then that same cache is what each user reads from
 // on the latest ocean molts page
@@ -126,7 +133,6 @@ func Latest(svc ItemService, tablename string) []Molt {
 func (u *User) CreateMolt(svc ItemService, tablename string, content string) error {
 	// use the iso 8601 format so that it is easier to query createdAtTime
 	m := &Molt{}
-	// can use the molts created field to sort globally...?
 	KUID := GenerateKSUID()                   // share one KUID key for time sorting
 	m.PK = fmt.Sprintf("M#%s", u.ID)          // M#<UserName>#
 	m.SK = fmt.Sprintf("M#%s#%s", u.ID, KUID) // M#<UserName>#<KUID> so molts are users most recent first
@@ -198,7 +204,10 @@ func (u *User) Trench(svc ItemService, tablename string) []Molt {
 	trench := make([]Molt, 0)
 	for _, f := range following {
 		// use f.SK[2:] b/c only need the ID value not the 'F#' to find user display
-		d, _ := ByID(f.SK[2:], svc, tablename)
+		d, err := ByID(f.SK[2:], svc, tablename)
+		if err != nil {
+			fmt.Errorf("ERR ID LOOKUP: %s", err)
+		}
 		for _, molt := range l {
 			if d.Display == molt.Author && d.Display != u.Display {
 				trench = append(trench, molt)
@@ -237,30 +246,74 @@ func (u *User) Molts(svc ItemService, tablename string) []Molt {
 	return m
 }
 
-func (m *Molt) ById(svc ItemService, tablename string, text string) {
+// Like - increments the passed in molt_id's like_count
+// POST /molts/like
+func (u *User) Like(svc ItemService, tablename, mid string) error {
+	// this is only for developing mode to work with GIN will need a session
+	// which isn't great for running a local test programatically
+	l := &Like{
+		PK:     "ML#" + u.ID,
+		SK:     "ML#" + mid[2:], // because from front end it will be the full M#N
+		GSI4PK: "ML#" + mid[2:],
+		GSI4SK: "ML#" + u.ID,
+	}
+
+	item, err := attributevalue.MarshalMap(l)
+	if err != nil {
+		fmt.Println("ERR: ", err)
+		panic(err)
+	}
+	tItems := make([]types.TransactWriteItem, 0)
+	tw1 := types.TransactWriteItem{
+		Put: &types.Put{
+			Item:                item,
+			TableName:           aws.String(tablename),
+			ConditionExpression: aws.String("attribute_not_exists(PK)"),
+		},
+	}
+	// update likes for molt
+	tw2 := types.TransactWriteItem{
+		Update: &types.Update{
+			Key: map[string]types.AttributeValue{
+				"PK": &types.AttributeValueMemberS{
+					Value: mid,
+				},
+				"SK": &types.AttributeValueMemberS{
+					Value: mid,
+				},
+			},
+			TableName:           aws.String(tablename),
+			ConditionExpression: aws.String("attribute_exists(PK)"),
+			UpdateExpression:    aws.String("set #like_count = #like_count + :value"),
+			ExpressionAttributeNames: map[string]string{
+				"#like_count": "like_count",
+			},
+			ExpressionAttributeValues: map[string]types.AttributeValue{
+				":value": &types.AttributeValueMemberN{Value: "1"},
+			},
+		},
+	}
+	tItems = append(tItems, tw1)
+	tItems = append(tItems, tw2)
+
+	_, err = svc.ItemTable.TransactWriteItems(context.TODO(), &dynamodb.TransactWriteItemsInput{
+		TransactItems: tItems,
+	})
+
+	if err != nil {
+		fmt.Printf("\nErr: %v", err)
+	}
+	return err
+}
+
+func (m *Molt) Delete(svc ItemService, tablename, text string) {
+	// sets provided moltu id to deleted=true
 
 }
 
-func (m *Molt) ByAuthor(svc ItemService, tablename string, text string) {
-
-}
-
-func (m *Molt) ByTime(svc ItemService, tablename string, text string) {
-
-}
-
-func (m *Molt) Re(svc ItemService, tablename string, mid string) {
-	// (a) Remolt a molt from the ocean view
-	// (b) Remalt a molt from the trench view
-	// both scenarios require increments the 'original' molts Remolt Count
-	// so need to be able to access it from the CachedLatest
-	// can do query on GSI3PK (today) where author == cachedAuthor
-}
-
-func (m *Molt) Delete(svc ItemService, tablename string, text string) {
-
-}
-
-func (m *Molt) Edit(svc ItemService, tablename string, text string) {
-
+func (m *Molt) Re(svc ItemService, tablename, mid string) {
+	// creates a new molt
+	// with link to molt embedded in it
+	// increments remolt count on molt
+	// increments user's moltCount
 }
