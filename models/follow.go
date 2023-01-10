@@ -40,6 +40,7 @@ func (u *User) Follow(svc ItemService, tablename string, fid string) error {
 			ConditionExpression: aws.String("attribute_not_exists(PK)"),
 		},
 	}
+	// increments how many lobsters the user is following
 	tw2 := types.TransactWriteItem{
 		Update: &types.Update{
 			Key: map[string]types.AttributeValue{

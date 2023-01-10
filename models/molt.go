@@ -44,11 +44,18 @@ type Like struct {
 	GSI4SK string `dynamodbav:"GSI4SK"`
 }
 
+type Remolt struct {
+	PK     string `dynamodbav:"PK"`
+	SK     string `dynamodbav:"SK"`
+	GSI4PK string `dynamodbav:"GSI5PK"`
+	GSI4SK string `dynamodbav:"GSI5SK"`
+}
+
 // FillOcean - is a lambda function that runs every X hour to build the cache
 // then that same cache is what each user reads from
 // on the latest ocean molts page
 // currently builds 5 shards (5 copies of the 25 max latest molts)
-func FillOcean(svc ItemService, tablename string) {
+func FillOcean(svc ItemService, tablename string) error {
 	// retrieve all deals from past day
 	l := Latest(svc, tablename)
 	fmt.Printf("Length of latest is: %d", len(l))
@@ -61,14 +68,18 @@ func FillOcean(svc ItemService, tablename string) {
 		item, err := attributevalue.MarshalMap(c)
 		if err != nil {
 			fmt.Println("ERR: ", err)
-			panic(err)
+			return err
 		}
 		_, err = svc.ItemTable.PutItem(context.TODO(), &dynamodb.PutItemInput{
 			TableName: aws.String(tablename),
 			Item:      item,
 		})
+		if err != nil {
+			return err
+		}
 
 	}
+	return nil
 }
 
 // Ocean - returns the collection  of the latest molts from a random N shard
@@ -129,8 +140,83 @@ func Latest(svc ItemService, tablename string) []Molt {
 	return items
 }
 
+func (u *User) Re(svc ItemService, tablename, content string) error {
+	// creates a new molt
+	// with link to molt embedded in it
+	// increments remolt count on molt
+	// increments user's moltCount
+	// use the iso 8601 format so that it is easier to query createdAtTime
+	//re := Remolt{
+	//	PK:     "M#" + u.ID,
+	//	SK:     "M#",
+	//	GSI4PK: "M#",
+	//	GSI4SK: "RM#" + u.ID,
+	//}
+	m := &Molt{}
+	KUID := GenerateKSUID()                   // share one KUID key for time sorting
+	m.PK = fmt.Sprintf("M#%s", u.ID)          // M#<UserName>#
+	m.SK = fmt.Sprintf("M#%s#%s", u.ID, KUID) // M#<UserName>#<KUID> so molts are users most recent first
+	m.Author = u.Display
+	m.Content = content
+
+	now := time.Now()
+	y, mnth, d := now.Date()
+
+	m.GSI3PK = fmt.Sprintf("M#%s", fmt.Sprintf("%d-%d-%d", y, int(mnth), d))
+	m.GSI3SK = fmt.Sprintf("M#%s", KUID)
+
+	molt, err := attributevalue.MarshalMap(m)
+
+	if err != nil {
+		fmt.Println("ERR: ", err)
+		panic(err)
+	}
+
+	tItems := make([]types.TransactWriteItem, 0)
+	// delete it from the main table
+	tw1 := types.TransactWriteItem{
+		Put: &types.Put{
+			Item:                molt,
+			TableName:           aws.String(tablename),
+			ConditionExpression: aws.String("attribute_not_exists(PK)"),
+		},
+	}
+	tw2 := types.TransactWriteItem{
+		Update: &types.Update{
+			Key: map[string]types.AttributeValue{
+				"PK": &types.AttributeValueMemberS{
+					Value: u.PK,
+				},
+				"SK": &types.AttributeValueMemberS{
+					Value: u.SK,
+				},
+			},
+			ConditionExpression: aws.String("attribute_exists(PK)"),
+			TableName:           aws.String(tablename),
+			UpdateExpression:    aws.String("set #remolt_count = #remolt_count + :value"),
+			ExpressionAttributeNames: map[string]string{
+				"#remolt_count": "remolt_count",
+			},
+			ExpressionAttributeValues: map[string]types.AttributeValue{
+				":value": &types.AttributeValueMemberN{Value: "1"},
+			},
+		},
+	}
+	tItems = append(tItems, tw1)
+	tItems = append(tItems, tw2)
+
+	_, err = svc.ItemTable.TransactWriteItems(context.TODO(), &dynamodb.TransactWriteItemsInput{
+		TransactItems: tItems,
+	})
+
+	if err != nil {
+		fmt.Printf("\nErr: %v", err)
+	}
+	return err
+}
+
 // CreateMolt - adds molt to db and increments user's MoltCount
-func (u *User) CreateMolt(svc ItemService, tablename string, content string) error {
+func (u *User) CreateMolt(svc ItemService, tablename, content string) error {
 	// use the iso 8601 format so that it is easier to query createdAtTime
 	m := &Molt{}
 	KUID := GenerateKSUID()                   // share one KUID key for time sorting
@@ -248,13 +334,15 @@ func (u *User) Molts(svc ItemService, tablename string) []Molt {
 
 // Like - increments the passed in molt_id's like_count
 // POST /molts/like
-func (u *User) Like(svc ItemService, tablename, mid string) error {
+func (u *User) Like(svc ItemService, tablename string, m Molt) error {
 	// this is only for developing mode to work with GIN will need a session
-	// which isn't great for running a local test programatically
+	// which isn't great for running a local test programmatically
+	fmt.Printf("\nMID: %s", m.PK[2:])
+	fmt.Printf("\nMID: %s", m.PK[2:])
 	l := &Like{
 		PK:     "ML#" + u.ID,
-		SK:     "ML#" + mid[2:], // because from front end it will be the full M#N
-		GSI4PK: "ML#" + mid[2:],
+		SK:     "ML#" + m.PK[2:], // because from front end it will be the full M#N
+		GSI4PK: "ML#" + m.PK[2:],
 		GSI4SK: "ML#" + u.ID,
 	}
 
@@ -266,23 +354,25 @@ func (u *User) Like(svc ItemService, tablename, mid string) error {
 	tItems := make([]types.TransactWriteItem, 0)
 	tw1 := types.TransactWriteItem{
 		Put: &types.Put{
-			Item:                item,
-			TableName:           aws.String(tablename),
+			Item: item,
+			// User should only be able to like a molt once...
 			ConditionExpression: aws.String("attribute_not_exists(PK)"),
+			TableName:           aws.String(tablename),
 		},
 	}
-	// update likes for molt
+	//update likes for molt
 	tw2 := types.TransactWriteItem{
 		Update: &types.Update{
 			Key: map[string]types.AttributeValue{
 				"PK": &types.AttributeValueMemberS{
-					Value: mid,
+					Value: m.PK,
 				},
 				"SK": &types.AttributeValueMemberS{
-					Value: mid,
+					Value: m.SK,
 				},
 			},
-			TableName:           aws.String(tablename),
+			TableName: aws.String(tablename),
+			// molt needs to exist to increment count
 			ConditionExpression: aws.String("attribute_exists(PK)"),
 			UpdateExpression:    aws.String("set #like_count = #like_count + :value"),
 			ExpressionAttributeNames: map[string]string{
@@ -309,11 +399,4 @@ func (u *User) Like(svc ItemService, tablename, mid string) error {
 func (m *Molt) Delete(svc ItemService, tablename, text string) {
 	// sets provided moltu id to deleted=true
 
-}
-
-func (m *Molt) Re(svc ItemService, tablename, mid string) {
-	// creates a new molt
-	// with link to molt embedded in it
-	// increments remolt count on molt
-	// increments user's moltCount
 }
