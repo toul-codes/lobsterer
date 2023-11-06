@@ -9,10 +9,8 @@ require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.13.4
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.10.6
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.11.43
-	github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider v1.21.2
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.17.7
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.29.5
-	github.com/aws/smithy-go v1.13.5
 	github.com/dgrijalva/jwt-go v3.0.0+incompatible
 	github.com/dustin/go-humanize v0.0.0-20170828050815-79e699ccd02f
 	github.com/gin-contrib/sessions v0.0.0-20170917021446-cccdeef56346
@@ -20,6 +18,7 @@ require (
 	github.com/lestrrat/go-jwx v0.0.0-20170407002556-10335d0ed76a
 	github.com/nfnt/resize v0.0.0-20160724205520-891127d8d1b5
 	github.com/satori/go.uuid v1.1.1-0.20170321230731-5bf94b69c6b6
+	github.com/segmentio/ksuid v1.0.4
 	github.com/sirupsen/logrus v1.0.3
 	github.com/spf13/viper v1.0.0
 )
@@ -41,6 +40,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sso v1.11.26 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.13.9 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.17.6 // indirect
+	github.com/aws/smithy-go v1.13.5 // indirect
 	github.com/boj/redistore v0.0.0-20160128113310-fc113767cd6b // indirect
 	github.com/bradfitz/gomemcache v0.0.0-20170208213004-1952afaa557d // indirect
 	github.com/bradleypeabody/gorilla-sessions-memcache v0.0.0-20170503205333-75ee37df8664 // indirect
@@ -62,7 +62,6 @@ require (
 	github.com/mattn/go-isatty v0.0.3 // indirect
 	github.com/mitchellh/mapstructure v0.0.0-20170523030023-d0303fe80992 // indirect
 	github.com/pelletier/go-toml v1.0.1 // indirect
-	github.com/segmentio/ksuid v1.0.4 // indirect
 	github.com/smartystreets/goconvey v1.7.2 // indirect
 	github.com/spf13/afero v0.0.0-20171004064803-3de492c3cda9 // indirect
 	github.com/spf13/cast v1.1.0 // indirect

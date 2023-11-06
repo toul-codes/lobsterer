@@ -2,17 +2,13 @@ package models
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/aws/transport/http"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-	"github.com/aws/smithy-go"
 	"log"
-	"strings"
 )
 
 const (
@@ -245,28 +241,6 @@ func buildCreateTableInput(tableName string) *dynamodb.CreateTableInput {
 		TableName:   aws.String(tableName),
 		BillingMode: types.BillingModePayPerRequest,
 	}
-}
-
-func IsConditionCheckFailure(err error) bool {
-	if strings.Contains(err.Error(), "ConditionalCheckFailedException") {
-		return true
-	}
-	var oe *smithy.OperationError
-	if errors.As(err, &oe) {
-		var re *http.ResponseError
-		if errors.As(err, &re) {
-			var tce *types.TransactionCanceledException
-			if errors.As(err, &tce) {
-				for _, reason := range tce.CancellationReasons {
-					if *reason.Code == "ConditionalCheckFailed" {
-						return true
-					}
-				}
-			}
-		}
-	}
-
-	return false
 }
 
 func DeleteAllItems(d *dynamodb.Client, tableName string) error {

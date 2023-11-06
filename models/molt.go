@@ -45,10 +45,17 @@ type Like struct {
 }
 
 type Remolt struct {
-	PK     string `dynamodbav:"PK"`
-	SK     string `dynamodbav:"SK"`
-	GSI4PK string `dynamodbav:"GSI5PK"`
-	GSI4SK string `dynamodbav:"GSI5SK"`
+	PK           string `dynamodbav:"PK"`
+	SK           string `dynamodbav:"SK"`
+	GSI5PK       string `dynamodbav:"GSI5PK"`
+	GSI5SK       string `dynamodbav:"GSI5SK"`
+	Author       string `dynamodbav:"author"`
+	Content      string `dynamodbav:"content"`
+	Url          string `dynamodbav:"url"`
+	Deleted      bool   `dynamodbav:"deleted"`
+	LikeCount    int    `dynamodbav:"like_count"`
+	RemoltCount  int    `dynamodbav:"remolt_count"`
+	CommentCount int    `dynamodbav:"comment_count"`
 }
 
 // FillOcean - is a lambda function that runs every X hour to build the cache
@@ -140,30 +147,28 @@ func Latest(svc ItemService, tablename string) []Molt {
 	return items
 }
 
-func (u *User) Re(svc ItemService, tablename, content string) error {
+func (u *User) ReMolt(svc ItemService, tablename string, other Molt) error {
 	// creates a new molt
-	// with link to molt embedded in it
+	// by passing in the relevent content from other molt
 	// increments remolt count on molt
 	// increments user's moltCount
 	// use the iso 8601 format so that it is easier to query createdAtTime
-	//re := Remolt{
-	//	PK:     "M#" + u.ID,
-	//	SK:     "M#",
-	//	GSI4PK: "M#",
-	//	GSI4SK: "RM#" + u.ID,
-	//}
+
+	// GSI5PK:REPO#<OriginalOwner>#<RepoName>
+	// GSI5SK:FORK#<Owner>
+	// use the iso 8601 format so that it is easier to query createdAtTime
 	m := &Molt{}
 	KUID := GenerateKSUID()                   // share one KUID key for time sorting
 	m.PK = fmt.Sprintf("M#%s", u.ID)          // M#<UserName>#
 	m.SK = fmt.Sprintf("M#%s#%s", u.ID, KUID) // M#<UserName>#<KUID> so molts are users most recent first
 	m.Author = u.Display
-	m.Content = content
+	m.Content = other.Content
 
 	now := time.Now()
 	y, mnth, d := now.Date()
 
 	m.GSI3PK = fmt.Sprintf("M#%s", fmt.Sprintf("%d-%d-%d", y, int(mnth), d))
-	m.GSI3SK = fmt.Sprintf("M#%s", KUID)
+	m.GSI3SK = fmt.Sprintf("RM#%s", KUID)
 
 	molt, err := attributevalue.MarshalMap(m)
 
@@ -193,9 +198,9 @@ func (u *User) Re(svc ItemService, tablename, content string) error {
 			},
 			ConditionExpression: aws.String("attribute_exists(PK)"),
 			TableName:           aws.String(tablename),
-			UpdateExpression:    aws.String("set #remolt_count = #remolt_count + :value"),
+			UpdateExpression:    aws.String("set #molt_count = #molt_count + :value"),
 			ExpressionAttributeNames: map[string]string{
-				"#remolt_count": "remolt_count",
+				"#molt_count": "molt_count",
 			},
 			ExpressionAttributeValues: map[string]types.AttributeValue{
 				":value": &types.AttributeValueMemberN{Value: "1"},
@@ -213,6 +218,7 @@ func (u *User) Re(svc ItemService, tablename, content string) error {
 		fmt.Printf("\nErr: %v", err)
 	}
 	return err
+
 }
 
 // CreateMolt - adds molt to db and increments user's MoltCount
@@ -338,7 +344,7 @@ func (u *User) Like(svc ItemService, tablename string, m Molt) error {
 	// this is only for developing mode to work with GIN will need a session
 	// which isn't great for running a local test programmatically
 	fmt.Printf("\nMID: %s", m.PK[2:])
-	fmt.Printf("\nMID: %s", m.PK[2:])
+	fmt.Printf("\nMID: %s", m.SK[2:])
 	l := &Like{
 		PK:     "ML#" + u.ID,
 		SK:     "ML#" + m.PK[2:], // because from front end it will be the full M#N
@@ -354,8 +360,7 @@ func (u *User) Like(svc ItemService, tablename string, m Molt) error {
 	tItems := make([]types.TransactWriteItem, 0)
 	tw1 := types.TransactWriteItem{
 		Put: &types.Put{
-			Item: item,
-			// User should only be able to like a molt once...
+			Item:                item,
 			ConditionExpression: aws.String("attribute_not_exists(PK)"),
 			TableName:           aws.String(tablename),
 		},
@@ -371,8 +376,7 @@ func (u *User) Like(svc ItemService, tablename string, m Molt) error {
 					Value: m.SK,
 				},
 			},
-			TableName: aws.String(tablename),
-			// molt needs to exist to increment count
+			TableName:           aws.String(tablename),
 			ConditionExpression: aws.String("attribute_exists(PK)"),
 			UpdateExpression:    aws.String("set #like_count = #like_count + :value"),
 			ExpressionAttributeNames: map[string]string{
