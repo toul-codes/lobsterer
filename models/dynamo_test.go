@@ -204,9 +204,38 @@ func TestUser_ReMolt(t *testing.T) {
 	l := Latest(is, TableName)
 	f2.ReMolt(is, TableName, l[0])
 	l = Latest(is, TableName)
-	fmt.Printf("\nLatest: %v", l)
-	m := f2.Molts(is, TableName)
-	fmt.Printf("\n user 2 molts: %v", m)
+	got := l[1].RemoltCount
+	if got != 1 {
+		fmt.Printf("got: %d, want %d", got, 1)
+	}
+	CleanUp()
+}
+
+func TestUser_Comment(t *testing.T) {
+	is := LocalService()
+	SetUp()
+	f, _ := ByID("1", is, TableName)
+	f.CreateMolt(is, TableName, "I'm the first crab...")
+	f2, _ := ByID("2", is, TableName)
+	l := Latest(is, TableName)
+	f2.Comment(is, TableName, "BOO!", l[0])
+	l = Latest(is, TableName)
+	fmt.Printf("f comment count on their molt is %d", l[0].CommentCount)
+	CleanUp()
+}
+
+func TestUser_Comments(t *testing.T) {
+	is := LocalService()
+	SetUp()
+	f, _ := ByID("1", is, TableName)
+	f.CreateMolt(is, TableName, "I'm the first crab...")
+	f2, _ := ByID("2", is, TableName)
+	l := Latest(is, TableName)
+	f2.Comment(is, TableName, "BOO!", l[0])
+	comments := f.Comments(is, TableName, l[0])
+	for _, v := range comments {
+		fmt.Printf("comment %v", v)
+	}
 	CleanUp()
 }
 

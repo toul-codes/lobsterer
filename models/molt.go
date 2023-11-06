@@ -43,6 +43,11 @@ type Like struct {
 	GSI4PK string `dynamodbav:"GSI4PK"`
 	GSI4SK string `dynamodbav:"GSI4SK"`
 }
+type Comment struct {
+	PK      string `dynamodbav:"PK"`
+	SK      string `dynamodbav:"SK"`
+	Content string `dynamodbav:"content"`
+}
 
 type Remolt struct {
 	PK           string `dynamodbav:"PK"`
@@ -147,28 +152,19 @@ func Latest(svc ItemService, tablename string) []Molt {
 	return items
 }
 
+// ReMolt - turns another crabs molt into user's own molt
 func (u *User) ReMolt(svc ItemService, tablename string, other Molt) error {
-	// creates a new molt
-	// by passing in the relevent content from other molt
-	// increments remolt count on molt
-	// increments user's moltCount
-	// use the iso 8601 format so that it is easier to query createdAtTime
-
-	// GSI5PK:REPO#<OriginalOwner>#<RepoName>
-	// GSI5SK:FORK#<Owner>
-	// use the iso 8601 format so that it is easier to query createdAtTime
-	m := &Molt{}
-	KUID := GenerateKSUID()                   // share one KUID key for time sorting
-	m.PK = fmt.Sprintf("M#%s", u.ID)          // M#<UserName>#
-	m.SK = fmt.Sprintf("M#%s#%s", u.ID, KUID) // M#<UserName>#<KUID> so molts are users most recent first
-	m.Author = u.Display
-	m.Content = other.Content
-
+	KUID := GenerateKSUID()
 	now := time.Now()
 	y, mnth, d := now.Date()
-
-	m.GSI3PK = fmt.Sprintf("M#%s", fmt.Sprintf("%d-%d-%d", y, int(mnth), d))
-	m.GSI3SK = fmt.Sprintf("RM#%s", KUID)
+	m := &Molt{
+		GSI3PK:  fmt.Sprintf("M#%s", fmt.Sprintf("%d-%d-%d", y, int(mnth), d)),
+		GSI3SK:  fmt.Sprintf("RM#%s", KUID),
+		PK:      fmt.Sprintf("M#%s", u.ID),
+		SK:      fmt.Sprintf("M#%s#%s", u.ID, KUID),
+		Author:  u.Display,
+		Content: other.Content,
+	}
 
 	molt, err := attributevalue.MarshalMap(m)
 
@@ -178,7 +174,7 @@ func (u *User) ReMolt(svc ItemService, tablename string, other Molt) error {
 	}
 
 	tItems := make([]types.TransactWriteItem, 0)
-	// delete it from the main table
+
 	tw1 := types.TransactWriteItem{
 		Put: &types.Put{
 			Item:                molt,
@@ -207,6 +203,116 @@ func (u *User) ReMolt(svc ItemService, tablename string, other Molt) error {
 			},
 		},
 	}
+	tw3 := types.TransactWriteItem{
+		Update: &types.Update{
+			Key: map[string]types.AttributeValue{
+				"PK": &types.AttributeValueMemberS{
+					Value: other.PK,
+				},
+				"SK": &types.AttributeValueMemberS{
+					Value: other.SK,
+				},
+			},
+			ConditionExpression: aws.String("attribute_exists(PK)"),
+			TableName:           aws.String(tablename),
+			UpdateExpression:    aws.String("set #remolt_count = #remolt_count + :value"),
+			ExpressionAttributeNames: map[string]string{
+				"#remolt_count": "remolt_count",
+			},
+			ExpressionAttributeValues: map[string]types.AttributeValue{
+				":value": &types.AttributeValueMemberN{Value: "1"},
+			},
+		},
+	}
+
+	tItems = append(tItems, tw1)
+	tItems = append(tItems, tw2)
+	tItems = append(tItems, tw3)
+
+	_, err = svc.ItemTable.TransactWriteItems(context.TODO(), &dynamodb.TransactWriteItemsInput{
+		TransactItems: tItems,
+	})
+
+	if err != nil {
+		fmt.Printf("\nErr: %v", err)
+	}
+	return err
+
+}
+
+// Comments - returns the comments on a MOLT_ID
+func (u *User) Comments(svc ItemService, tablename string, m Molt) []Comment {
+	c := make([]Comment, 0)
+	p := dynamodb.NewQueryPaginator(svc.ItemTable, &dynamodb.QueryInput{
+		TableName:              aws.String(tablename),
+		Limit:                  aws.Int32(5),
+		KeyConditionExpression: aws.String("PK = :hashKey"),
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":hashKey": &types.AttributeValueMemberS{Value: fmt.Sprintf("MCOMMENT#%s#%s", m.Author, m.ID)},
+		},
+		ScanIndexForward: aws.Bool(false), // retrieve users latest molts
+	})
+	for p.HasMorePages() {
+		out, err := p.NextPage(context.TODO())
+		if err != nil {
+			fmt.Printf("ERR: %s", err)
+			panic(err)
+		}
+		err = attributevalue.UnmarshalListOfMaps(out.Items, &c)
+		if err != nil {
+			fmt.Printf("ERR: %s", err)
+			panic(err)
+		}
+
+	}
+	return c
+}
+
+// Comment - adds a comment to a molt
+func (u *User) Comment(svc ItemService, tablename string, content string, m Molt) error {
+	// PK: MCOMMENT#<OWNER>#<MOLT_ID>#
+	// SK: MCOMMENT#<COMMENT_ID>
+	KUID := GenerateKSUID()
+	c := &Comment{
+		PK:      fmt.Sprintf("MCOMMENT#%s#%s", m.Author, m.ID),
+		SK:      fmt.Sprintf("MCOMMENT#%s", KUID),
+		Content: content,
+	}
+	comment, err := attributevalue.MarshalMap(c)
+	if err != nil {
+		fmt.Println("ERR marshalling: ", err)
+		panic(err)
+	}
+	tItems := make([]types.TransactWriteItem, 0)
+	tw1 := types.TransactWriteItem{
+		Put: &types.Put{
+			Item:                comment,
+			TableName:           aws.String(tablename),
+			ConditionExpression: aws.String("attribute_not_exists(PK)"),
+		},
+	}
+	tw2 := types.TransactWriteItem{
+		Update: &types.Update{
+			Key: map[string]types.AttributeValue{
+				"PK": &types.AttributeValueMemberS{
+					Value: m.PK,
+				},
+				"SK": &types.AttributeValueMemberS{
+					Value: m.SK,
+				},
+			},
+			ConditionExpression: aws.String("attribute_exists(PK)"),
+			TableName:           aws.String(tablename),
+			UpdateExpression:    aws.String("set #comment_count = #comment_count + :value"),
+			ExpressionAttributeNames: map[string]string{
+				"#comment_count": "comment_count",
+			},
+			ExpressionAttributeValues: map[string]types.AttributeValue{
+				":value": &types.AttributeValueMemberN{Value: "1"},
+			},
+		},
+	}
+
 	tItems = append(tItems, tw1)
 	tItems = append(tItems, tw2)
 

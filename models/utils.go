@@ -46,7 +46,7 @@ func SetUp() {
 			ID:             strconv.Itoa(i),
 			GSI1PK:         "",
 			GSI1SK:         "",
-			Name:           RandStringRunes(10, charRunes),
+			Name:           RandStringRunes(5, charRunes),
 			Email:          "",
 			Display:        RandStringRunes(5, charRunes),
 			Description:    "",
